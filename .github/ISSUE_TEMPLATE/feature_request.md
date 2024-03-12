@@ -1,20 +1,17 @@
 ---
-name: Feature request
-about: Suggest an idea for this project
+name: 'Issue: Issue Template'
+about: Github Issue 등록을 위한 템플릿
 title: ''
 labels: ''
 assignees: ''
 
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+## Description
+- 어떤 기능인지 설명을 작성하세요.
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+## To-Do
+- [ ] todo
+- [ ] todo
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
-
-**Additional context**
-Add any other context or screenshots about the feature request here.
+## ETC
