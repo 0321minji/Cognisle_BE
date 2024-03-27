@@ -20,9 +20,6 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 from users.models import User
 # from core.exceptions import ApplicationError
 
-JWT_PAYLOAD_HANDLER = api_settings.JWT_PAYLOAD_HANDLER
-JWT_ENCODE_HANDLER = api_settings.JWT_ENCODE_HANDLER
-
 class UserService:
     def __init__(self):
         pass
