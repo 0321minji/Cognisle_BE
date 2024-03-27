@@ -9,7 +9,7 @@ from pathlib import Path
 from rest_framework import exceptions
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.exceptions import InvalidToken
-from rest_framework_jwt.settings import api_settings
+from rest_framework_simplejwt.settings import api_settings
 from django.core.files.images import ImageFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from twilio.rest import Client

@@ -16,3 +16,8 @@ DB에 모델 반영하기
 
 ## python manage.py runserver
 로컬에서 서버 띄우기
+
+#### 로컬 변동사항 후 서버 반영 ####
+서버 접속 
+cd Cognisle_BE
+source venv/bin/activate
