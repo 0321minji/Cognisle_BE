@@ -4,19 +4,13 @@ from django.conf import settings
 # from django.utils.http import urlsafe_base64_encode
 # from django.template.loader import render_to_string
 from datetime import timedelta
-import environ, os
-from pathlib import Path
 from rest_framework import exceptions
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.exceptions import InvalidToken
 from rest_framework_simplejwt.settings import api_settings
 from django.core.files.images import ImageFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from twilio.rest import Client
-import random
-BASE_DIR = Path(__file__).resolve().parent.parent
-env = environ.Env(DEBUG=(bool, False))
-environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+from users.selectors import UserSelector
 from users.models import User
 # from core.exceptions import ApplicationError
 
@@ -32,12 +26,24 @@ class UserService:
         user.is_active=False
         user.save()
     
-    def user_phone_verify(to_phone:str):
-        account_sid=env('ACCOUNT_SID')
-        auth_token=env('AUTH_TOKEN')
-        auth_number=random.randint(1000, 10000)
-        client = Client(account_sid,auth_token)
-        from_phone='+16562212841'
-        content='인증 번호 [{}]를 입력해주세요.'.format(auth_number)
-        message = client.messages.create(to=to_phone,from_=from_phone,body=content)    
-        return auth_number
+    def login(self, email:str, password:str):
+        selector = UserSelector()
+        
+        user = selector.get_user_by_email(email)
+        
+        if not selector.check_password(user,password):
+            raise exceptions.ValidationError(
+                {'datail':'아이디나 비밀번호가 올바르지 않습니다.'}
+            )
+        
+        token = RefreshToken.for_user(user=user)
+        
+        data={
+            "email":user.email,
+            'refresh':str(token),
+            'access':str(token.access_token),
+            'nickname':user.nickname,
+        }
+        
+        return data
+        

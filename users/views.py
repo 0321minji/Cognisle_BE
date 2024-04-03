@@ -35,54 +35,35 @@ class UserSignUpApi(APIView):
             'status':'success',
         },status=status.HTTP_201_CREATED)
 
-class SendAPI(APIView):
-    permission_classes=(AllowAny,)
+class UserLoginApi(APIView):
+    permission_classes = (AllowAny,)
     
-    class SendInputSerializer(serializers.Serializer):
-        phone=serializers.CharField()
+    class UserLoginInputSerializer(serializers.Serializer):
+        email=serializers.CharField()
+        password=serializers.CharField()
+        
+    class UserLoginOutputSerializer(serializers.Serializer):
+        email=serializers.CharField()
+        refresh=serializers.CharField()
+        access=serializers.CharField()
+        nickname=serializers.CharField(allow_blank=True)
         
     def post(self,request):
-        serializers = self.SendInputSerializer(data=request.data)
-        serializers.is_valid(raise_exception=True)
-        data=serializers.validated_data
-                 
-        auth_num=UserService.user_phone_verify(
-            to_phone=data.get('phone')
+        input_serializer = self.UserLoginInputSerializer(data=request.data)
+        input_serializer.is_valid(raise_exception=True)
+        data= input_serializer.validated_data
+        
+        service=UserService()
+        
+        login_data=service.login(
+            email=data.get('email'),
+            password=data.get('password'),
         )
-        request.session['auth_num']=auth_num
-        request.session['phone']=data.get('phone')
-    
-        return Response({
-            'status':'send success',
-        },status=status.HTTP_200_OK)        
+        
+        output_serializer = self.UserLoginOutputSerializer(data=login_data)
+        output_serializer.is_valid(raise_exception=True)
 
-       
-class VerifyAPI(APIView):
-    permission_classes=(AllowAny,)
-    
-    class VerifyInputSerializer(serializers.Serializer):
-        auth_num=serializers.IntegerField()
-        
-    def post(self,request):
-        serializers = self.VerifyInputSerializer(data=request.data)
-        serializers.is_valid(raise_exception=True)
-        data=serializers.validated_data
-        
-        stored_auth_num=request.session.get('auth_num')
-        
-        auth_num=data.get('auth_num')
-        print(stored_auth_num,auth_num)
-        
-        if stored_auth_num==auth_num:
-            request.session['verify_phone']=request.session['phone']
-            del request.session['auth_num']
-            return Response({
-                'status':'verify success'
-            },status=status.HTTP_200_OK)
-        else:
-            request.session.flush()
-            return Response({
-                'status':'verify fail'
-            },status=status.HTTP_400_BAD_REQUEST)
-        
-        
+        return Response({
+            'status': 'success',
+            'data': output_serializer.data,
+        }, status = status.HTTP_200_OK)
