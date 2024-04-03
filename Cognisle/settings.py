@@ -28,7 +28,7 @@ SECRET_KEY = env('COGNISLE_SECRET_KEY')
 DEBUG = True
 
 ALLOWED_HOSTS = ['.ap-northeast-2.compute.amazonaws.com',
-                 ".cognisle.shop",
+                 ".cognisle.shop",'127.0.0.1',
                  ]
 
 
