@@ -16,7 +16,7 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email,  password, discord_id, nickname,  **extra_fields):
-        extra_fields.setdefault('is_active', True)
+        #Django BaseUserManager의 기본 
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_staff', True)
 
