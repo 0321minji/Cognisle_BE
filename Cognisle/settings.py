@@ -28,9 +28,12 @@ SECRET_KEY = env('COGNISLE_SECRET_KEY')
 DEBUG = True
 
 ALLOWED_HOSTS = ['.ap-northeast-2.compute.amazonaws.com',
-                 ".cognisle.shop",'127.0.0.1',
+                 ".cognisle.shop",'127.0.0.1','localhost',
                  ]
 
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+SECURE_SSL_REDIRECT = True
 
 # Application definition
 DJANGO_APPS = [
