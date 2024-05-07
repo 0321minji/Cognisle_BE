@@ -11,6 +11,9 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Cognisle.settings')
-
+if os.environ.get('DJANGO_SETTINGS_MODULE') == 'Cognisle.settings.production':
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Cognisle.settings.production')
+elif os.environ.get('DJANGO_SETTINGS_MODULE') == 'Cognisle.settings.development':
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Cognisle.settings.development')
+    
 application = get_wsgi_application()
