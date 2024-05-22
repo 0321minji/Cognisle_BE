@@ -49,6 +49,7 @@ PROJECT_APPS = [
     'rest_framework_simplejwt',
     'core.apps.CoreConfig',
     'users.apps.UsersConfig',
+    'lands.apps.LandsConfig',
 ]
 
 INSTALLED_APPS = DJANGO_APPS+PROJECT_APPS
