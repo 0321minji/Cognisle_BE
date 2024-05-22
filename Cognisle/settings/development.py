@@ -23,7 +23,11 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('COGNISLE_SECRET_KEY')
-
+#s3 setting
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID','AKIAZ3Q2MBGNGYX5E3OL')
+AWS_SECERT_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME','cognisle.shop')
+AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME','ap-northeast-2')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
