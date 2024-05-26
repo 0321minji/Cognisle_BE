@@ -8,11 +8,7 @@ on:     #main 브랜치에 push 될 경우 수행
 jobs:     #아래의 jobs 수행
   build:
     runs-on: ubuntu-latest
-    steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-      
+    steps:     
       - name: Check out repository code
         uses: actions/checkout@v4
 
@@ -24,8 +20,9 @@ jobs:     #아래의 jobs 수행
           key: ${{secrets.KEY}}
           script: |
             mkdir -p /home/ubuntu/Cognisle_BE
+            
       - name: copy source via ssh key
-        uses: burnett01/rsync-deployment@4.1
+        uses: burnett01/rsync-deployments@5.2
         with:
           switches: -avzr --delete
           remote_path: /home/ubuntu/Cognisle_BE
