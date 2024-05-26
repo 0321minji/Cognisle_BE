@@ -13,3 +13,7 @@ class Item(admin.ModelAdmin):
 @admin.register(models.Location)
 class Location(admin.ModelAdmin):
     pass
+
+@admin.register(models.ItemImage)
+class ItemImage(admin.ModelAdmin):
+    pass
