@@ -157,3 +157,16 @@ secrets.json
 .env
 .Dockerfile.swp
 .idea
+nohup.out
+/static/*
+
+# Optionally ignore specific types of static files
+*.css
+*.js
+*.png
+*.jpg
+*.svg
+*.ico
+
+*.sublime-project
+*.sublime-workspace
