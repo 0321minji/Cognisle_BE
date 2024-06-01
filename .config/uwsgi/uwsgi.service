@@ -5,7 +5,6 @@ After=syslog.target
 [Service]
 ExecStart=/home/ubuntu/myvenv/bin/uwsgi --ini /home/ubuntu/Cognisle_BE/.config/uwsgi/Cognisle.ini
 
-
 Restart=always
 KillSignal=SIGQUIT
 Type=notify
