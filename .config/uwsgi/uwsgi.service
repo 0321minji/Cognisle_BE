@@ -3,7 +3,8 @@ Description=uWSGI service
 After=syslog.target
 
 [Service]
-ExecStart=/home/ubuntu/Cognisle_BE/myvenv/bin/uwsgi --ini /home/ubuntu/Cognisle_BE/.config/uwsgi/Cognisle.ini
+ExecStart=/home/ubuntu/myvenv/bin/uwsgi --ini /home/ubuntu/Cognisle_BE/.config/uwsgi/Cognisle.ini
+
 
 Restart=always
 KillSignal=SIGQUIT
