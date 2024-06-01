@@ -4,8 +4,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import serializers, status
 from rest_framework.response import Response
 
-from .models import Land, Location, Item
-from .services import LandCoordinatorService
+from .models import Land, Location, Item, ItemImage
+from .services import LandCoordinatorService, ItemImageService
 # Create your views here.
 class LandCreateApi(APIView):
     permission_classes=(AllowAny,)
@@ -32,3 +32,22 @@ class LandCreateApi(APIView):
                 'data' : {'id': land.id},
             },status=status.HTTP_201_CREATED)
             
+class ItemImageCreateApi(APIView):
+    permission_classes=(IsAuthenticated,)
+    
+    class ItemImageCreateInputSerializer(serializers.Serializer):
+        image=serializers.ImageField()
+    
+    def post(self,request):
+        serializer=self.ItemImageCreateInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data=serializer.validated_data
+        
+        item_img_url=ItemImageService.create(
+            image=data.get('image'),
+        )
+        
+        return Response({
+            'status':'success',
+            'data':{'url':item_img_url},
+        },status=status.HTTP_201_CREATED)
