@@ -35,7 +35,7 @@ AWS_S3_CUSTOM_DOMAIN = '{}.s3.amazonaws.com'.format(AWS_STORAGE_BUCKET_NAME)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost','127.0.0.1',]
+ALLOWED_HOSTS = ['localhost','127.0.0.1','.compute.amazonaws.com', '.cognisle.shop', '52.78.219.243']
 SECURE_SSL_REDIRECT = False
 
 # Application definition
