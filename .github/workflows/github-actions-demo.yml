@@ -29,11 +29,11 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_KEY: ${{ secrets.KEY }}
 
-      # - name: copy source via ssh key
-      #   uses: burnett01/rsync-deployments@5.2
-      #   with:
-      #     switches: -avzr --delete
-      #     remote_path: /home/ubuntu/Cognisle_BE
-      #     remote_user: ubuntu
-      #     remote_key: ${{ secrets.KEY }}
-      #     remote_host: ${{ secrets.SSH_HOST }}
+      - name: copy source via ssh key
+        uses: burnett01/rsync-deployments@5.2
+        with:
+          switches: -avzr --update
+          remote_path: /home/ubuntu/Cognisle_BE
+          remote_user: ubuntu
+          remote_key: ${{ secrets.KEY }}
+          remote_host: ${{ secrets.SSH_HOST }}
