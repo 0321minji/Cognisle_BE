@@ -1,11 +1,13 @@
 from django.shortcuts import render
+from django.shortcuts import get_object_or_404
+
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import serializers, status
 from rest_framework.response import Response
 from .selectors import ItemSelector
 from .models import Land, Location, Item, ItemImage
-from .services import LandCoordinatorService, ItemImageService
+from .services import LandCoordinatorService, ItemImageService, ItemService
 # Create your views here.
 class LandCreateApi(APIView):
     permission_classes=(AllowAny,)
@@ -78,3 +80,17 @@ class ItemListApi(APIView):
         )
         output=self.ItemListOutputSerializer(items,many=True)
         return Response(output.data,status=status.HTTP_200_OK)
+    
+#아이템 show 변경 api
+class ItemShowUpdateApi(APIView):
+    permission_classes=(IsAuthenticated,)
+    
+    def post(self, request, item_id):
+        shows=ItemService.show_or_no(
+            item=get_object_or_404(Item,pk=item_id)
+        )
+        
+        return Response({
+            'status':'success',
+            'data':{'show':shows},
+        },status=status.HTTP_200_OK)

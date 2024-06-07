@@ -40,3 +40,6 @@ class ItemSelector:
             }
         ) for item in items]
         return item_dtos
+
+    def show(self, item: Item):
+        return item.show

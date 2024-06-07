@@ -4,7 +4,7 @@ from django.db import transaction
 from django.shortcuts import get_list_or_404, get_object_or_404
 import io, time, uuid
 from django.conf import settings
-
+from .selectors import ItemSelector
 from .models import Land,Location,Item, ItemImage
 from users.models import User
 
@@ -60,4 +60,23 @@ class ItemImageService:
         image.save()
         
         return settings.MEDIA_URL+image.image.name
-    
+
+class ItemService:
+    def __init__(self):
+        pass
+    @staticmethod
+    def show_or_no(item:Item)->bool:
+        selector=ItemSelector()
+        if selector.show(item=item):
+            item.show=False
+            
+            item.full_clean()
+            item.save()
+            return False
+        else:
+            item.show=True
+            
+            item.full_clean()
+            item.save()
+            return True
+        
