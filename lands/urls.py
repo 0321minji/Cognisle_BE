@@ -7,4 +7,5 @@ urlpatterns=[
     path('create/',LandCreateApi.as_view(),name='create'),
     path('item/img/create/',ItemImageCreateApi.as_view(),name='item_img_create'),
     path('item/list/',ItemListApi.as_view(),name='item_list'),
+    path('<int:item_id>/show/',ItemShowUpdateApi.as_view(),name='item_show'),
 ]
