@@ -25,21 +25,31 @@ class ItemSelector:
         if user:
             q.add(Q(user=user),q.AND)
             
-        items = Item.objects.filter(q).prefetch_related('locations')
-        item_dtos=[ItemDto(
-            id=item.id,
-            show=item.show,
-            location=[{
-                        'x': loc.x,
-                        'y': loc.y,
-                        'z': loc.z,
-                    } for loc in item.locations.all()],
-            user={
-                'nickname':user.nickname,
-                'email':user.email,
+        items = Item.objects.filter(q).prefetch_related('locations', 'user')
+        item_dtos = []
+        for item in items:
+            item_data = {
+                'id': item.id,
+                'show': item.show,
+                'user': {
+                    'nickname': item.user.nickname,
+                    'email': item.user.email,
+                }
             }
-        ) for item in items]
+            if item.show:
+                item_data['location'] = [{
+                    'x': loc.x,
+                    'y': loc.y,
+                    'z': loc.z,
+                } for loc in item.locations.all()]
+            item_dtos.append(item_data)
         return item_dtos
 
     def show(self, item: Item):
         return item.show
+    
+class LandSelector:
+    @staticmethod
+    def get_lands_and_items(user_id):
+        lands=Land.objects.filter(user_id=user_id).prefetch_related('lands__item_image','lands__locations')
+        return lands
