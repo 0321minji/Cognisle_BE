@@ -5,7 +5,8 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import serializers, status
 from rest_framework.response import Response
-from .selectors import ItemSelector
+from .selectors import ItemSelector, LandSelector
+from rest_framework.exceptions import PermissionDenied
 from .models import Land, Location, Item, ItemImage
 from .services import LandCoordinatorService, ItemImageService, ItemService
 # Create your views here.
@@ -54,43 +55,65 @@ class ItemImageCreateApi(APIView):
             'data':{'url':item_img_url},
         },status=status.HTTP_201_CREATED)
         
-#전체 아이템 리스트(모든 소유 아이템)
-class ItemListApi(APIView):
-    permission_classes=(IsAuthenticated,)
-    
-    class ItemListFilterSerializer(serializers.Serializer):
-        #filter 소유한 아이템 중 사용/미사용 , 필터 사용 X시 소유한 모든 아이템
-        filter=serializers.BooleanField(required=False)
-        
-    class ItemListOutputSerializer(serializers.Serializer):
-        id = serializers.IntegerField()
-        show = serializers.BooleanField()
-        location = serializers.ListField(child=serializers.DictField())
-        
-    def get(self, request):
-        filters_serializer=self.ItemListFilterSerializer(
-            data=request.query_params
-        )
-        filters_serializer.is_valid(raise_exception=True)
-        filters = filters_serializer.validated_data
-        
-        items=ItemSelector.list(
-            filter=filters.get('filter',''),
-            user=request.user,
-        )
-        output=self.ItemListOutputSerializer(items,many=True)
-        return Response(output.data,status=status.HTTP_200_OK)
-    
 #아이템 show 변경 api
 class ItemShowUpdateApi(APIView):
     permission_classes=(IsAuthenticated,)
     
     def post(self, request, item_id):
-        shows=ItemService.show_or_no(
-            item=get_object_or_404(Item,pk=item_id)
-        )
+        item = get_object_or_404(Item, pk=item_id)
+        # 현재 로그인한 유저가 해당 아이템의 소유자인지 확인
+        if item.user != request.user:
+            raise PermissionDenied("You do not have permission to update this item.")
+        
+        shows = ItemService.show_or_no(item=item)
         
         return Response({
             'status':'success',
             'data':{'show':shows},
         },status=status.HTTP_200_OK)
+
+
+class UserLandItemListApi(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    class ItemImageSerializer(serializers.Serializer):
+        image = serializers.ImageField()
+
+    class LocationSerializer(serializers.Serializer):
+        x = serializers.CharField(max_length=100)
+        y = serializers.CharField(max_length=100)
+        z = serializers.CharField(max_length=100)
+
+    class ItemSerializer(serializers.Serializer):
+        id = serializers.IntegerField()
+        show = serializers.BooleanField()
+        item_image = serializers.SerializerMethodField()
+        locations = serializers.SerializerMethodField()
+
+        def get_item_image(self, obj):
+            return obj.item_image.image.url if obj.item_image else None
+
+        def get_locations(self, obj):
+            if obj.show:
+                return UserLandItemListApi.LocationSerializer(obj.locations.all(), many=True).data
+            return []
+
+    class LandItemOutputSerializer(serializers.Serializer):
+        lands = serializers.SerializerMethodField()
+        items = serializers.SerializerMethodField()
+
+        def get_lands(self,obj):
+            s3_base_url="https://s3.amazonaws.com/cognisle.shop/media/lands/background/"
+            land_img=f'{s3_base_url}land{obj.background}'
+            bg_img=f'{s3_base_url}bg{obj.background}'
+            return {'state':obj.background,'land_img': land_img, 'bg_img': bg_img}
+        
+        def get_items(self, obj):
+            return UserLandItemListApi.ItemSerializer(obj.lands.all(), many=True).data
+
+    def get(self, request, user_id):
+        if request.user.id != user_id:
+            raise PermissionDenied("You do not have permission to access this user's data.")
+        lands_items = LandSelector.get_lands_and_items(user_id=user_id)
+        output_serializer = self.LandItemOutputSerializer(lands_items, many=True)
+        return Response(output_serializer.data, status=status.HTTP_200_OK)
