@@ -118,46 +118,6 @@ class UserLandItemListApi(APIView):
         output_serializer = self.LandItemOutputSerializer(lands_items, many=True)
         return Response(output_serializer.data, status=status.HTTP_200_OK)
 
-#하나의 item의 위치 update하는 api
-# class ItemLocationUpdateApi(APIView):
-#     permission_classes=(IsAuthenticated,)
-    
-#     class LocationUpdateInputSerializer(serializers.Serializer):
-#         x=serializers.CharField(max_length=100)
-#         y=serializers.CharField(max_length=100)
-#         z=serializers.CharField(max_length=100)
-        
-#     @transaction.atomic        
-#     def post(self,request,item_id):
-#         item = get_object_or_404(Item,pk=item_id)
-        
-#         if request.user!=item.user:
-#             raise PermissionDenied("You do not have permission to update this item's location.")
-
-#         serializer=self.LocationUpdateInputSerializer(data=request.data)
-#         if serializer.is_valid():
-#             location_data=serializer.validated_data
-            
-#             location, _ = Location.objects.get_or_create(item=item)
-
-#             location.x=location_data['x']
-#             location.y=location_data['y']
-#             location.z=location_data['z']
-#             location.save()
-
-#             return Response({
-#                 'status':'success',
-#                 'data':{
-#                     'id':item.id,
-#                     'locations':{
-#                         'x':location.x,
-#                         'y':location.y,
-#                         'z':location.z
-#                     }
-#                 }
-#             },status=status.HTTP_200_OK)
-#         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-
 class ItemLocationUpdateApi(APIView):
     permission_classes = (IsAuthenticated,)
     class LocationUpdateInputSerializer(serializers.Serializer):
@@ -182,13 +142,17 @@ class ItemLocationUpdateApi(APIView):
                     raise PermissionDenied(f"You do not have permission to update the location of item {item.id}.")
 
                 # 기존 위치 정보를 가져오거나 생성합니다.
-                location, _ = Location.objects.get_or_create(item=item)
+                location, created = Location.objects.get_or_create(item=item)
                 
                 # 위치 정보를 업데이트합니다.
                 location.x = location_data['x']
                 location.y = location_data['y']
                 location.z = location_data['z']
                 location.save()
+                
+                if created:
+                    item.show=True
+                    item.save()
 
             return Response({
                 'status': 'success',
