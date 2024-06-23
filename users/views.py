@@ -7,6 +7,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from users.services import UserService
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 
 class UserSignUpApi(APIView):
     permission_classes=(AllowAny,)
@@ -14,10 +16,29 @@ class UserSignUpApi(APIView):
     class UserSignUpInputSerializer(serializers.Serializer):
         email=serializers.EmailField()
         password=serializers.CharField()
-        discord_id=serializers.CharField()
-        #phone=serializers.CharField()
-        nickname=serializers.CharField()
+        dsId=serializers.CharField()
+        dsName=serializers.CharField()
+        name=serializers.CharField()
         
+    @swagger_auto_schema(
+        request_body=UserSignUpInputSerializer,
+        security=[],
+        operation_id='유저 회원가입 API',
+        operation_description="유저 기본 회원가입 API 입니다.",
+        responses={
+            "200":openapi.Response(
+                description="OK",
+                examples={
+                    "application/json":{
+                        "status":"success",
+                    }
+                }
+            ),
+            "400":openapi.Response(
+                description="Bad Request",
+            ),
+        }
+    )    
     def post(self,request):
         serializers = self.UserSignUpInputSerializer(data=request.data)
         serializers.is_valid(raise_exception=True)
@@ -26,9 +47,9 @@ class UserSignUpApi(APIView):
         UserService.user_sign_up(
             email=data.get('email'),
             password=data.get('password'),
-            discord_id=data.get('discord_id'),
-            nickname=data.get('nickname'),
-            phone=request.session['verify_phone'],
+            dsId=data.get('dsId'),
+            name=data.get('name'),
+            dsName=data.get('dsName'),
         )
         
         return Response({

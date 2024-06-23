@@ -18,9 +18,9 @@ class UserService:
     def __init__(self):
         pass
     
-    def user_sign_up(email:str,password:str, discord_id:str, nickname:str,phone:str):
+    def user_sign_up(email:str,password:str, dsId:str, name:str,dsName:str):
 
-        user=User(email=email, password=password, discord_id=discord_id,nickname=nickname,phone=phone)
+        user=User(email=email, password=password, dsId=dsId,name=name,dsName=dsName)
         
         user.set_password(password)
         user.is_active=False
