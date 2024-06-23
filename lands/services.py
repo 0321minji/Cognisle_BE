@@ -77,6 +77,10 @@ class ItemService:
             item.show=True
             item.full_clean()
             item.save()
+            # location 값이 없으면 기본값 설정
+            if not item.locations.exists():
+                default_location = {'x': '30', 'y': '30', 'z': '3'}
+                Location.objects.create(item=item, **default_location)
             return True
     
     @staticmethod

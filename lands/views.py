@@ -87,7 +87,7 @@ class ItemCreateApi(APIView):
             }
         })
         
-#아이템 show 변경 api(사용->사용X시)
+#아이템 show 변경 api
 class ItemShowUpdateApi(APIView):
     permission_classes=(IsAuthenticated,)
     
