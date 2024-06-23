@@ -53,6 +53,7 @@ PROJECT_APPS = [
     'users.apps.UsersConfig',
     'sslserver',
     'lands.apps.LandsConfig',
+    'drf_yasg',
 ]
 
 INSTALLED_APPS = DJANGO_APPS+PROJECT_APPS
