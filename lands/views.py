@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
-
+from django.db import transaction
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import serializers, status
@@ -117,3 +117,55 @@ class UserLandItemListApi(APIView):
         lands_items = LandSelector.get_lands_and_items(user_id=user_id)
         output_serializer = self.LandItemOutputSerializer(lands_items, many=True)
         return Response(output_serializer.data, status=status.HTTP_200_OK)
+
+class ItemLocationUpdateApi(APIView):
+    permission_classes = (IsAuthenticated,)
+    class LocationUpdateInputSerializer(serializers.Serializer):
+        item_id = serializers.IntegerField()
+        x = serializers.CharField(max_length=100)
+        y = serializers.CharField(max_length=100)
+        z = serializers.CharField(max_length=100)
+
+    class MultipleLocationUpdateSerializer(serializers.Serializer):
+        locations = serializers.ListField(child=serializers.DictField())
+
+    @transaction.atomic
+    def post(self, request):
+        serializer = self.MultipleLocationUpdateSerializer(data=request.data)
+        if serializer.is_valid():
+            locations_data = serializer.validated_data['locations']
+
+            for location_data in locations_data:
+                item = get_object_or_404(Item, pk=location_data['item_id'])
+
+                if request.user != item.user:
+                    raise PermissionDenied(f"You do not have permission to update the location of item {item.id}.")
+
+                # 기존 위치 정보를 가져오거나 생성합니다.
+                location, created = Location.objects.get_or_create(item=item)
+                
+                # 위치 정보를 업데이트합니다.
+                location.x = location_data['x']
+                location.y = location_data['y']
+                location.z = location_data['z']
+                location.save()
+                
+                if created:
+                    item.show=True
+                    item.save()
+
+            return Response({
+                'status': 'success',
+                'data': {
+                    'updated_items': [{
+                        'id': location_data['item_id'],
+                        'locations': {
+                            'x': location_data['x'],
+                            'y': location_data['y'],
+                            'z': location_data['z']
+                        }
+                    } for location_data in locations_data]
+                }
+            }, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
