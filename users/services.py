@@ -42,7 +42,7 @@ class UserService:
             "email":user.email,
             'refresh':str(token),
             'access':str(token.access_token),
-            'nickname':user.nickname,
+            'name':user.name,
         }
         
         return data
