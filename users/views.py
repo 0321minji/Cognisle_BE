@@ -67,8 +67,32 @@ class UserLoginApi(APIView):
         email=serializers.CharField()
         refresh=serializers.CharField()
         access=serializers.CharField()
-        nickname=serializers.CharField(allow_blank=True)
+        name=serializers.CharField()
         
+    @swagger_auto_schema(
+        request_body=UserLoginInputSerializer,
+        security=[],
+        operation_id='유저 로그인 API',
+        operation_description="유저 로그인 API 입니다.",
+        responses={
+            "200":openapi.Response(
+                description="OK",
+                examples={
+                    "application/json":{
+                        "status":"success",
+                        'email':'test@naver.com',
+                        'refresh':'refresh 토큰',
+                        'access':'access 토큰',
+                        'name':'test',
+                    }
+                }
+            ),
+            "400":openapi.Response(
+                description="Bad Request",
+            ),
+        }
+    )      
+    
     def post(self,request):
         input_serializer = self.UserLoginInputSerializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
