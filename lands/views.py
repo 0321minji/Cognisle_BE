@@ -13,6 +13,9 @@ from .selectors import ItemSelector, LandSelector
 from rest_framework.exceptions import PermissionDenied
 from .models import Land, Location, Item, ItemImage
 from .services import LandCoordinatorService, ItemImageService, ItemService
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
+
 # Create your views here.
 class LandCreateApi(APIView):
     permission_classes=(AllowAny,)
@@ -21,6 +24,27 @@ class LandCreateApi(APIView):
         background=serializers.CharField(required=False)
         items=serializers.ListField(required=False)
         
+    @swagger_auto_schema(
+        request_body=LandCreateInputSerializer,
+        security=[],
+        operation_id='Land 생성 API',
+        operation_description="기본 섬 생성 API.\n 회원가입시 함께 사용 or 서버가 직접 사용",
+        responses={
+            "200":openapi.Response(
+                description="OK",
+                examples={
+                    "application/json":{
+                        "status":"success",
+                        "data":{'id':1},
+                    }
+                }
+            ),
+            "400":openapi.Response(
+                description="Bad Request",
+            ),
+        }
+    )    
+      
     def post(self,request):
         serializers=self.LandCreateInputSerializer(data=request.data)
         serializers.is_valid(raise_exception=True)
@@ -45,12 +69,34 @@ class ItemImageCreateApi(APIView):
     class ItemImageCreateInputSerializer(serializers.Serializer):
         image=serializers.ImageField()
     
+    @swagger_auto_schema(
+        request_body=ItemImageCreateInputSerializer,
+        security=[],
+        operation_id='아이템 이미지 생성 API',
+        operation_description="아이템 이미지를 생성하는 API 입니다.",
+        responses={
+            "200":openapi.Response(
+                description="OK",
+                examples={
+                    "application/json":{
+                        "status":"success",
+                        "data":{'img_pk':'1',
+                                'url':'https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/item/pic/1717246454.20869859d06b930207a43f38b444c80139a66a6.jpg'}
+                    }
+                }
+            ),
+            "400":openapi.Response(
+                description="Bad Request",
+            ),
+        }
+    )    
+    
     def post(self,request):
         serializer=self.ItemImageCreateInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data=serializer.validated_data
         
-        item_img_url,image_pk=ItemImageService.create(
+        item_img_url,image_pk=ItemImageService.create( 
             image=data.get('image'),
         )
         
@@ -66,6 +112,30 @@ class ItemCreateApi(APIView):
     class ItemCreateInputSerializer(serializers.Serializer):
         image_id = serializers.CharField()
 
+    @swagger_auto_schema(
+        request_body=ItemCreateInputSerializer,
+        security=[],
+        operation_id='아이템 생성 API',
+        operation_description="아이템을 생성하는 API",
+        responses={
+            "200":openapi.Response(
+                description="OK",
+                examples={
+                    "application/json":{
+                        "status":"success",
+                        "data":{
+                            'item_pk':'2',
+                            'item_image':'https://s3.amazonaws.com/cognisle.shop/media/lands/background/land2',
+                            'item_show':'false',
+                        }
+                    }
+                }
+            ),
+            "400":openapi.Response(
+                description="Bad Request",
+            ),
+        }
+    )    
     
     def post(self,request):
         serializer=self.ItemCreateInputSerializer(data=request.data)
@@ -91,8 +161,37 @@ class ItemCreateApi(APIView):
 class ItemShowUpdateApi(APIView):
     permission_classes=(IsAuthenticated,)
     
+    class ItemShowUpdateSerializer(serializers.Serializer):
+        item_id = serializers.IntegerField()
+        
+    @swagger_auto_schema(
+        request_body=ItemShowUpdateSerializer,
+        security=[],
+        operation_id='아이템 사용여부 변경 API',
+        operation_description="아이템을 사용하거나 사용해제하는 API",
+        responses={
+            "200":openapi.Response(
+                description="OK",
+                examples={
+                    "application/json":{
+                        "status":"success",
+                        "data":{
+                            'item_show':'true',
+                        }
+                    }
+                }
+            ),
+            "400":openapi.Response(
+                description="Bad Request",
+            ),
+        }
+    )    
     def post(self, request, *args, **kwargs):
-        item_id=request.data.get('item_id')
+        serializer = self.ItemShowUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        
+        item_id=data.get('item_id')
         item = get_object_or_404(Item, pk=item_id)
         # 현재 로그인한 유저가 해당 아이템의 소유자인지 확인
         if item.user != request.user:
@@ -156,7 +255,59 @@ class UserLandItemListApi(APIView):
 
         def get_items(self, obj):
             return UserLandItemListApi.ItemSerializer(obj.lands.filter(show=True), many=True).data
-        
+    
+    @swagger_auto_schema(
+        operation_id='아이템 리스트 조회 API',
+        operation_description="소유하고 있는 모든 아이템과 섬 상태를 조회하는 API(user=request)",
+        responses={
+            "200":openapi.Response(
+                description="OK",
+                examples={
+                    "application/json":{
+                        "status":"success",
+                        "data":{
+                            'lands':{
+                                "state":"2",
+                                "land_img":"https://s3.amazonaws.com/cognisle.shop/media/lands/background/land2",
+                                "bg_img": "https://s3.amazonaws.com/cognisle.shop/media/lands/background/bg2"
+                            },
+                            "items": [
+                                {
+                                    "id": 1,
+                                    "show": 'true',
+                                    "item_image": "https://cognisle.shop.s3.amazonaws.com/media/lands/item/pic/KakaoTalk_20240227_203618663.png",
+                                    "locations": [
+                                        {
+                                            "x": "100",
+                                            "y": "200",
+                                            "z": "300"
+                                        }
+                                    ]
+                                },
+                                    {
+                                    "id": 2,
+                                    "show": 'true',
+                                    "item_image": "https://cognisle.shop.s3.amazonaws.com/media/lands/item/pic/1716722334.059527112cbccf5a3a4226aa1a504843bcc4ff.jpg",
+                                    "locations": [
+                                        {
+                                            "x": "400",
+                                            "y": "500",
+                                            "z": "600"
+                                        }
+                                    ]   
+                                }
+                            ]
+                        }
+                        
+                    }
+                }
+            ),
+            "400":openapi.Response(
+                description="Bad Request",
+            ),
+        }
+    )    
+            
     def get(self, request, user_id):
         user = get_object_or_404(User, pk=user_id)
         print(user.email)
@@ -183,6 +334,45 @@ class ItemLocationUpdateApi(APIView):
     class MultipleLocationUpdateSerializer(serializers.Serializer):
         locations = serializers.ListField(child=serializers.DictField())
 
+    @swagger_auto_schema(
+        request_body=LocationUpdateInputSerializer,
+        security=[],
+        operation_id='아이템 위치 변경 API',
+        operation_description="섬꾸미기를 통한 아이템들의 변경된 위치들을 받아서 변경하는 API",
+        responses={
+            "200":openapi.Response(
+                description="OK",
+                examples={
+                    "application/json":{
+                        "status":"success",
+                        "data":{
+                            'updated_items': [{
+                                'id': 2,
+                                'locations': {
+                                    'x': 20,
+                                    'y': 30,
+                                    'z': 5
+                                }
+                            },{
+                                'id': 5,
+                                'locations': {
+                                    'x': 44,
+                                    'y': 30,
+                                    'z': 4
+                                }
+                            }
+                                              
+                            ]
+                        }
+                    }
+                }
+            ),
+            "400":openapi.Response(
+                description="Bad Request",
+            ),
+        }
+    )    
+    
     @transaction.atomic
     def post(self, request):
         serializer = self.MultipleLocationUpdateSerializer(data=request.data)
