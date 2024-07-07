@@ -266,6 +266,7 @@ class UserLandItemListApi(APIView):
                     "application/json":{
                         "status":"success",
                         "data":{
+                            'user':3,
                             'lands':{
                                 "state":"2",
                                 "land_img":"https://s3.amazonaws.com/cognisle.shop/media/lands/background/land2",
@@ -321,7 +322,10 @@ class UserLandItemListApi(APIView):
             output_serializer = self.LandItemOutputSerializer(lands_items, many=True)
         else:
             output_serializer = self.PublicLandItemOutputSerializer(lands_items, many=True)
-        return Response(output_serializer.data, status=status.HTTP_200_OK)
+        return Response(
+            {'status':'sucess',
+             'data':{'user or land':user.email,
+                     'land&item':output_serializer.data}}, status=status.HTTP_200_OK)
 
 class ItemLocationUpdateApi(APIView):
     permission_classes = (IsAuthenticated,)
@@ -332,7 +336,8 @@ class ItemLocationUpdateApi(APIView):
         z = serializers.CharField(max_length=100)
 
     class MultipleLocationUpdateSerializer(serializers.Serializer):
-        locations = serializers.ListField(child=serializers.DictField())
+        locations = serializers.ListField(child=serializers.DictField(),required=False)
+        land_back_id = serializers.IntegerField(required=False, allow_null=True)
 
     @swagger_auto_schema(
         request_body=LocationUpdateInputSerializer,
@@ -362,7 +367,8 @@ class ItemLocationUpdateApi(APIView):
                                 }
                             }
                                               
-                            ]
+                            ],
+                            'land_background_id':1,
                         }
                     }
                 }
@@ -376,40 +382,50 @@ class ItemLocationUpdateApi(APIView):
     @transaction.atomic
     def post(self, request):
         serializer = self.MultipleLocationUpdateSerializer(data=request.data)
-        if serializer.is_valid():
-            locations_data = serializer.validated_data['locations']
-
-            for location_data in locations_data:
-                item = get_object_or_404(Item, pk=location_data['item_id'])
-
-                if request.user != item.user:
-                    raise PermissionDenied(f"You do not have permission to update the location of item {item.id}.")
-
-                # 기존 위치 정보를 가져오거나 생성합니다.
-                location, created = Location.objects.get_or_create(item=item)
-                
-                # 위치 정보를 업데이트합니다.
-                location.x = location_data['x']
-                location.y = location_data['y']
-                location.z = location_data['z']
-                location.save()
-                
-                if created:
-                    item.show=True
-                    item.save()
-
-            return Response({
-                'status': 'success',
-                'data': {
-                    'updated_items': [{
-                        'id': location_data['item_id'],
-                        'locations': {
-                            'x': location_data['x'],
-                            'y': location_data['y'],
-                            'z': location_data['z']
-                        }
-                    } for location_data in locations_data]
-                }
-            }, status=status.HTTP_200_OK)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
         
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        land_back_id=data.get('land_back_id')
+        locations_data = data.get('locations',[])
+        
+        print(f"Land back ID: {land_back_id}")
+        for location_data in locations_data:
+            item = get_object_or_404(Item, pk=location_data['item_id'])
+
+            if request.user != item.user:
+                raise PermissionDenied(f"You do not have permission to update the location of item {item.id}.")
+
+            # 기존 위치 정보를 가져오거나 생성합니다.
+            location, created = Location.objects.get_or_create(item=item)
+            
+            # 위치 정보를 업데이트합니다.
+            location.x = location_data['x']
+            location.y = location_data['y']
+            location.z = location_data['z']
+            location.save()
+                
+            if created:
+                item.show=True
+                item.save()
+            
+        if land_back_id:
+            land = get_object_or_404(Land,user=request.user)
+            if request.user !=land.user:
+                raise PermissionDenied(f"You do not have permission to update the land of {land.user}.")
+            land.background=land_back_id 
+            land.save()
+            
+        return Response({
+            'status': 'success',
+            'data': {
+                'updated_items': [{
+                    'id': location_data['item_id'],
+                    'locations': {
+                        'x': location_data['x'],
+                        'y': location_data['y'],
+                        'z': location_data['z']
+                    }
+                } for location_data in locations_data],
+                'land_background_id':land_back_id,
+            }
+        }, status=status.HTTP_200_OK)
