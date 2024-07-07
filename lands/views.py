@@ -340,7 +340,7 @@ class ItemLocationUpdateApi(APIView):
         land_back_id = serializers.IntegerField(required=False, allow_null=True)
 
     @swagger_auto_schema(
-        request_body=LocationUpdateInputSerializer,
+        request_body=MultipleLocationUpdateSerializer,
         security=[],
         operation_id='아이템 위치 변경 API',
         operation_description="섬꾸미기를 통한 아이템들의 변경된 위치들을 받아서 변경하는 API",
