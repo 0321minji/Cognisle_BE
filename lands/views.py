@@ -246,7 +246,7 @@ class UserLandItemListApi(APIView):
             return {'state':obj.background,'land_img': land_img, 'bg_img': bg_img}
         
         def get_items(self, obj):
-            return UserLandItemListApi.ItemSerializer(obj.lands.all(), many=True).data
+            return UserLandItemListApi.ItemSerializer(obj.items.all(), many=True).data
         
     class PublicLandItemOutputSerializer(serializers.Serializer):
         lands = serializers.SerializerMethodField()
@@ -259,7 +259,7 @@ class UserLandItemListApi(APIView):
             return {'state': obj.background, 'land_img': land_img, 'bg_img': bg_img}
 
         def get_items(self, obj):
-            return UserLandItemListApi.ItemSerializer(obj.lands.filter(show=True), many=True).data
+            return UserLandItemListApi.ItemSerializer(obj.items.filter(show=True), many=True).data
     
     @swagger_auto_schema(
         operation_id='아이템 리스트 조회 API',
