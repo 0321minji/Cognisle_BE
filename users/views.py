@@ -140,7 +140,7 @@ class UserLoginApi(APIView):
                     'Authorization': f'Bearer {user_token}'
                 }
                 print(headers)
-                landcreate_response = requests.post('http://127.0.0.1:8000/lands/create/', json={
+                landcreate_response = requests.post('https://www.cognisle.shop/lands/create/', json={
                     'background': '1',
                     'items':[]
                 }, headers=headers)
