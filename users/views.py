@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from users.models import User
+from lands.models import Land
 # Create your views here.
 from rest_framework.views import APIView
 from rest_framework import serializers
@@ -9,6 +10,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from users.services import UserService
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+import requests
+from django.shortcuts import get_object_or_404
 
 class UserSignUpApi(APIView):
     permission_classes=(AllowAny,)
@@ -116,11 +119,43 @@ class UserLoginApi(APIView):
             email=data.get('email'),
             password=data.get('password'),
         )
-        
         output_serializer = self.UserLoginOutputSerializer(data=login_data)
         output_serializer.is_valid(raise_exception=True)
-
+        
+        user = get_object_or_404(User, email=data.get('email'))
+        landcreate_data = None
+        try:
+            land = Land.objects.get(user=user)
+            landcreate_data=land.pk
+        except Land.DoesNotExist:
+            try:
+                user_token = login_data.get('access')
+                if user_token:
+                    print(user_token)
+                else:
+                    return Response ({
+                        'status':'error',
+                    },status=status.HTTP_401_UNAUTHORIZED)
+                headers = {
+                    'Authorization': f'Bearer {user_token}'
+                }
+                print(headers)
+                landcreate_response = requests.post('https://www.cognisle.shop/lands/create/', json={
+                    'background': '1',
+                    'items':[]
+                }, headers=headers)
+                print(landcreate_response.status_code, landcreate_response.content)
+                landcreate_response.raise_for_status()
+                landcreate_data = landcreate_response.json()
+            except requests.exceptions.RequestException as e:
+                return Response({
+                    'status': 'error',
+                    'message': 'User login successful, but failed to trigger landcreate.',
+                    'error': str(e)
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
         return Response({
             'status': 'success',
             'data': output_serializer.data,
-        }, status = status.HTTP_200_OK)
+            'land': landcreate_data,
+        }, status=status.HTTP_200_OK)
