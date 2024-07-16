@@ -17,8 +17,8 @@ class ItemImage(models.Model):
 class Item(models.Model):
     item_image = models.ForeignKey(ItemImage, on_delete=models.CASCADE, related_name='items')
     show=models.BooleanField(default=False)
-    land=models.ForeignKey('Land',related_name='lands',on_delete=models.SET_NULL,null=True)
-    user=models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='items')
+    lands=models.ManyToManyField('Land',related_name='items')
+    users=models.ManyToManyField('users.User', related_name='items')
     
 class Land(models.Model):
     #섬 타입(배경), 아이템(27가지:선택된 이미지에 대한 url과 (x,y,z)), 섬 주인(유저)

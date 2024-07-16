@@ -62,6 +62,11 @@ class LandCreateApi(APIView):
                 'status' : 'success',
                 'data' : {'id': land.id},
             },status=status.HTTP_201_CREATED)
+        else:
+            return Response({
+                'status': 'error',
+                'message': 'Failed to create land.'
+            }, status=status.HTTP_400_BAD_REQUEST)
             
 class ItemImageCreateApi(APIView):
     permission_classes=(IsAuthenticated,)

@@ -17,10 +17,9 @@ class LandCoordinatorService:
         land_service=LandService()
         
         land=land_service.create(
-            landlord=self.user,
-            
             background=background,
             items=items,
+            user=self.user
         )
     
         if land is not None:
@@ -31,12 +30,12 @@ class LandService:
         pass
     
     @staticmethod
-    def create(background:str,items:list[str],landlord:User):
+    def create(background:str,items:list[str],user:User):
         items=Item.objects.filter(id__in=items)
         
         land=Land(
             background=background,
-            landlord=landlord
+            user=user
         )
         
         land.full_clean()
