@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from users.models import User
-from lands.models import Land
+from lands.models import Land, Item
 # Create your views here.
 from rest_framework.views import APIView
 from rest_framework import serializers
@@ -147,3 +147,51 @@ class UserLoginApi(APIView):
             'data': output_serializer.data,
             'land': landcreate_data,
         }, status=status.HTTP_200_OK)
+    
+# class UserListApi(APIView):
+#     permission_classes=(AllowAny,)
+    
+#     def get(self,request):
+#         user_lists= UserSelector   
+# 일단 특정 유저에 대한 detail api 
+class UserDetailApi(APIView):
+    class LandSerializer(serializers.ModelSerializer):
+        pk = serializers.IntegerField()
+        class Meta:
+            model = Land
+            fields = ['pk']
+            
+    class ItemSerializer(serializers.Serializer):
+        pk = serializers.IntegerField()
+        show = serializers.BooleanField()
+        
+    class UserDetailOuputSerializer(serializers.Serializer):
+        pk = serializers.IntegerField()
+        email = serializers.EmailField()
+        dsId = serializers.CharField()
+        name = serializers.CharField()
+        dsName = serializers.CharField()
+        is_active = serializers.BooleanField()
+        is_staff = serializers.BooleanField()
+        land_id = serializers.SerializerMethodField()
+        items_id_list = serializers.SerializerMethodField()
+
+        def get_land_id(self, obj):
+            land = Land.objects.get(user=obj)
+            return land.pk
+        def get_items_id_list(self, obj):
+            items = Item.objects.filter(users=obj)
+            return [{'id': item.pk, 'show': item.show} for item in items]
+    
+    def get(self, request, user_pk):
+        print(user_pk)
+        
+        user=get_object_or_404(User,pk=user_pk)
+        print(user.email)
+        serializers = self.UserDetailOuputSerializer(user)
+        
+        return Response({
+            'status':'success',
+            'data':serializers.data,
+        },status=status.HTTP_200_OK)
+    

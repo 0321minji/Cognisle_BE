@@ -25,6 +25,17 @@ class UserService:
         user.set_password(password)
         user.is_active=False
         user.save()
+        
+        data={
+            "email":user.email,
+            'dsId':user.dsId,
+            'name':user.name,
+            'dsName':user.dsName,
+            'pk':user.pk,
+        }
+
+        return data
+
     
     def login(self, email:str, password:str):
         selector = UserSelector()
