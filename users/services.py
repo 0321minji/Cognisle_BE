@@ -35,6 +35,7 @@ class UserService:
         }
 
         return data
+
     
     def login(self, email:str, password:str):
         selector = UserSelector()
@@ -53,7 +54,6 @@ class UserService:
             'refresh':str(token),
             'access':str(token.access_token),
             'name':user.name,
-            'pk':user.pk,
         }
         
         return data

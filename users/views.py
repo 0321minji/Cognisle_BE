@@ -23,13 +23,6 @@ class UserSignUpApi(APIView):
         dsName=serializers.CharField()
         name=serializers.CharField()
         
-    class UserSignUpOutputSerializer(serializers.Serializer):
-        email=serializers.CharField()
-        pk=serializers.CharField()
-        dsId=serializers.CharField()
-        dsName=serializers.CharField()
-        name=serializers.CharField()
-            
     @swagger_auto_schema(
         request_body=UserSignUpInputSerializer,
         security=[],
@@ -54,7 +47,7 @@ class UserSignUpApi(APIView):
         serializers.is_valid(raise_exception=True)
         data=serializers.validated_data
         
-        signup_data=UserService.user_sign_up(
+        UserService.user_sign_up(
             email=data.get('email'),
             password=data.get('password'),
             dsId=data.get('dsId'),
@@ -62,12 +55,8 @@ class UserSignUpApi(APIView):
             dsName=data.get('dsName'),
         )
         
-        output_serializer = self.UserSignUpOutputSerializer(data=signup_data)
-        output_serializer.is_valid(raise_exception=True)
-        
         return Response({
             'status':'success',
-            'data':output_serializer.data,
         },status=status.HTTP_201_CREATED)
 
 class UserLoginApi(APIView):
@@ -82,7 +71,6 @@ class UserLoginApi(APIView):
         refresh=serializers.CharField()
         access=serializers.CharField()
         name=serializers.CharField()
-        pk=serializers.CharField()
         
     @swagger_auto_schema(
         request_body=UserLoginInputSerializer,
