@@ -15,7 +15,7 @@ class UserManager(BaseUserManager):
         user.save()
         return user
 
-    def create_superuser(self, email,  password, discord_id, nickname,  **extra_fields):
+    def create_superuser(self, email,  password, dsId, name,dsName , **extra_fields):
         #Django BaseUserManager의 기본 
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_staff', True)
@@ -23,7 +23,7 @@ class UserManager(BaseUserManager):
 
         if extra_fields.get('is_superuser') is not True:
             raise ValueError(('Superuser must have is_superuser=True.'))
-        return self.create_user(email, password,discord_id, nickname,  **extra_fields)
+        return self.create_user(email, password,dsId, name,dsName,  **extra_fields)
 
 class User(AbstractBaseUser,PermissionsMixin,TimeStampedModel):
     email = models.EmailField(max_length=64,unique=True)
