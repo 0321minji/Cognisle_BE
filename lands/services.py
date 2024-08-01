@@ -51,14 +51,15 @@ class ItemImageService:
     @staticmethod
     def create(image:InMemoryUploadedFile):
         ext=image.name.split(".")[-1]
-        file_path = f'{str(time.time())}{str(uuid.uuid4().hex)}.{ext}'
-        img = ImageFile(io.BytesIO(image.read()), name=file_path)
+        file_path='{}.{}'.format(str(time.time())+str(uuid.uuid4().hex),ext)
+        img=ImageFile(io.BytesIO(image.read()),name=file_path)
         image=ItemImage(image=img)
         
         image.full_clean()
         image.save()
         
-        return (settings.MEDIA_URL+image.image.name, image.pk)
+        print(image.image.url)
+        return (f'{settings.MEDIA_URL}{image.image.name}', image.pk)
 
 class ItemService:
     def __init__(self):
@@ -83,14 +84,15 @@ class ItemService:
             return True
     
     @staticmethod
-    def create(user,image_id:str,show=bool):
+    def create(image_id:str,show=bool):
         item_image=get_object_or_404(ItemImage, pk=image_id)
-        land=get_object_or_404(Land,user=user)
+        print(item_image.image.url)
+        # land=get_object_or_404(Land,user=user)
         item=Item(
             item_image=item_image,
             show=show,
-            land=land,
-            user=user,
+            # land=land,
+            # user=user,
         )
         item.full_clean()
         item.save()

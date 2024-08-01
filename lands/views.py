@@ -151,8 +151,9 @@ class ItemCreateApi(APIView):
         item=ItemService.create(
             image_id=data.get('image_id'),
             show=False,
-            user=request.user,
+            # user=request.user,
         )
+        
         
         return Response({
             'status':'success',
