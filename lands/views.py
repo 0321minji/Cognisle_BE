@@ -151,8 +151,9 @@ class ItemCreateApi(APIView):
         item=ItemService.create(
             image_id=data.get('image_id'),
             show=False,
-            user=request.user,
+            # user=request.user,
         )
+        
         
         return Response({
             'status':'success',
@@ -282,7 +283,7 @@ class UserLandItemListApi(APIView):
                                 {
                                     "id": 1,
                                     "show": 'true',
-                                    "item_image": "https://cognisle.shop.s3.amazonaws.com/media/lands/item/pic/KakaoTalk_20240227_203618663.png",
+                                    "item_image": "https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/item/pic/KakaoTalk_20240227_203618663.png",
                                     "locations": [
                                         {
                                             "x": "100",
@@ -294,7 +295,7 @@ class UserLandItemListApi(APIView):
                                     {
                                     "id": 2,
                                     "show": 'true',
-                                    "item_image": "https://cognisle.shop.s3.amazonaws.com/media/lands/item/pic/1716722334.059527112cbccf5a3a4226aa1a504843bcc4ff.jpg",
+                                    "item_image": "https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/item/pic/1716722334.059527112cbccf5a3a4226aa1a504843bcc4ff.jpg",
                                     "locations": [
                                         {
                                             "x": "400",

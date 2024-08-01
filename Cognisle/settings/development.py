@@ -29,9 +29,11 @@ AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID','AKIAZ3Q2MBGNGYX5E3OL')
 AWS_SECERT_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME','cognisle.shop')
 AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME','ap-northeast-2')
-AWS_S3_CUSTOM_DOMAIN = '{}.s3.amazonaws.com'.format(AWS_STORAGE_BUCKET_NAME)
-
-
+AWS_S3_CUSTOM_DOMAIN = f's3.{AWS_S3_REGION_NAME}.amazonaws.com/{AWS_STORAGE_BUCKET_NAME}'
+# media files setting
+MEDIAFILES_LOCATION = 'media'
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{MEDIAFILES_LOCATION}/'
+DEFAULT_FILE_STORAGE = 'Cognisle.custom_storages.MediaStorage'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -65,10 +67,7 @@ REST_FRAMEWORK = {
 from datetime import timedelta
 ...
 
-# media files setting
-MEDIAFILES_LOCATION = 'media'
-MEDIA_URL = 'https://{}/{}/'.format(AWS_S3_CUSTOM_DOMAIN, MEDIAFILES_LOCATION)
-DEFAULT_FILE_STORAGE = 'Cognisle.custom_storages.MediaStorage'
+
 
 
 SIMPLE_JWT = {
