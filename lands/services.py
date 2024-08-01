@@ -13,12 +13,10 @@ class LandCoordinatorService:
         self.user=user
     
     @transaction.atomic
-    def create(self, background:str,items:list[str])->Land:
+    def create(self, background:str)->Land:
         land_service=LandService()
-        
         land=land_service.create(
             background=background,
-            items=items,
             user=self.user
         )
     
@@ -30,8 +28,7 @@ class LandService:
         pass
     
     @staticmethod
-    def create(background:str,items:list[str],user:User):
-        items=Item.objects.filter(id__in=items)
+    def create(background:str,user:User):
         
         land=Land(
             background=background,
@@ -41,7 +38,6 @@ class LandService:
         land.full_clean()
         land.save()
         
-        land.items.set(items)
         return land
     
 class ItemImageService:

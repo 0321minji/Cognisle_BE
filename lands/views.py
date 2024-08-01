@@ -22,8 +22,7 @@ class LandCreateApi(APIView):
     permission_classes=(AllowAny,)
     
     class LandCreateInputSerializer(serializers.Serializer):
-        background=serializers.CharField(required=False)
-        items=serializers.ListField(required=False)
+        background=serializers.CharField(required=False,default=1)
         
     @swagger_auto_schema(
         request_body=LandCreateInputSerializer,
@@ -54,8 +53,7 @@ class LandCreateApi(APIView):
         service=LandCoordinatorService(user=request.user)
         
         land=service.create(
-            background=data.get('background'),
-            items=data.get('items',[]),
+            background=data.get('background')
         )
         
         if land:
