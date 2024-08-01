@@ -51,8 +51,8 @@ class ItemImageService:
     @staticmethod
     def create(image:InMemoryUploadedFile):
         ext=image.name.split(".")[-1]
-        file_path='{}.{}'.format(str(time.time())+str(uuid.uuid4().hex),ext)
-        img=ImageFile(io.BytesIO(image.read()),name=file_path)
+        file_path = f'{str(time.time())}{str(uuid.uuid4().hex)}.{ext}'
+        img = ImageFile(io.BytesIO(image.read()), name=file_path)
         image=ItemImage(image=img)
         
         image.full_clean()
