@@ -225,7 +225,6 @@ class UserLandItemListApi(APIView):
 
     class ItemSerializer(serializers.Serializer):
         id = serializers.IntegerField()
-        show = serializers.BooleanField()
         item_image = serializers.SerializerMethodField()
         locations = serializers.SerializerMethodField()
 
@@ -233,36 +232,35 @@ class UserLandItemListApi(APIView):
             return obj.item_image.image.url if obj.item_image else None
 
         def get_locations(self, obj):
-            if obj.show:
-                return UserLandItemListApi.LocationSerializer(obj.locations.all(), many=True).data
-            return []
-
+            user_id = self.context.get('user_id')
+            locations = obj.locations.filter(land__user=user_id)
+            return UserLandItemListApi.LocationSerializer(locations, many=True).data
+    
     class LandItemOutputSerializer(serializers.Serializer):
-        lands = serializers.SerializerMethodField()
+        land = serializers.SerializerMethodField()
         items = serializers.SerializerMethodField()
 
-        def get_lands(self,obj):
-            s3_base_url="https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/background/"
-            land_img=f'{s3_base_url}land{obj.background}.png'
-            bg_img=f'{s3_base_url}bg{obj.background}.png'
-            return {'state':obj.background,'land_img': land_img, 'bg_img': bg_img}
-        
-        def get_items(self, obj):
-            return UserLandItemListApi.ItemSerializer(obj.items.all(), many=True).data
-        
-    class PublicLandItemOutputSerializer(serializers.Serializer):
-        lands = serializers.SerializerMethodField()
-        items = serializers.SerializerMethodField()
-
-        def get_lands(self, obj):
+        def get_land(self, obj):
             s3_base_url = "https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/background/"
             land_img = f'{s3_base_url}land{obj.background}.png'
             bg_img = f'{s3_base_url}bg{obj.background}.png'
             return {'state': obj.background, 'land_img': land_img, 'bg_img': bg_img}
 
         def get_items(self, obj):
-            return UserLandItemListApi.ItemSerializer(obj.items.filter(show=True), many=True).data
-    
+            request = self.context.get('request')
+            items = self.context.get('items')
+        
+            if obj.user == request.user:
+                # 소유자면 모든 아이템 반환
+                return UserLandItemListApi.ItemSerializer(items, many=True,context={'user_id':self.context.get('user_id')}).data
+            else:
+                # 사용된 아이템만 필터링하여 반환
+                used_items = []
+                for item in items:
+                    if item.locations.filter(land=obj, show=True).exists():
+                        used_items.append(item)
+                return UserLandItemListApi.ItemSerializer(used_items, many=True,context={'user_id':self.context.get('user_id')}).data
+            
     @swagger_auto_schema(
         operation_id='아이템 리스트 조회 API',
         operation_description="소유하고 있는 모든 아이템과 섬 상태를 조회하는 API(user=request)",
@@ -320,20 +318,19 @@ class UserLandItemListApi(APIView):
         user = get_object_or_404(User, pk=user_id)
         print(user.email)
         print(request.user.id)
-        logger.info(f"Fetching lands and items for user_id: {user_id}")
-
-        lands_items = LandSelector.get_lands_and_items(user_id=user_id)
-        logger.info(f"Lands and items retrieved: {lands_items}")
-        lands_items = LandSelector.get_lands_and_items(user_id=user_id)
-        if request.user.id == user_id:
-            output_serializer = self.LandItemOutputSerializer(lands_items, many=True)
-        else:
-            output_serializer = self.PublicLandItemOutputSerializer(lands_items, many=True)
+        land = LandSelector.get_user_land(user_id=user_id)
+        items=LandSelector.get_user_items(user_id=user_id)
+        logger.info(f"Lands and items retrieved: {land}")
+        output_serializer = self.LandItemOutputSerializer(land, context={'user_id':user_id,'request': request,'items':items})
+        # if request.user.id == user_id:
+        #     output_serializer = self.LandItemOutputSerializer(lands_items, many=True)
+        # else:
+        #     output_serializer = self.PublicLandItemOutputSerializer(lands_items, many=True)
         return Response(
             {'status':'sucess',
              'data':{'owner':user.email,
-                     'lands':[item.get('lands') for item in output_serializer.data],
-                     'items':[item.get('items') for item in output_serializer.data]}}, status=status.HTTP_200_OK)
+                     'land':output_serializer.data.get('land'),
+                     'items':output_serializer.data.get('items')}}, status=status.HTTP_200_OK)
 
 class ItemLocationUpdateApi(APIView):
     permission_classes = (IsAuthenticated,)
@@ -388,7 +385,7 @@ class ItemLocationUpdateApi(APIView):
     )    
     
     @transaction.atomic
-    def post(self, request):
+    def put(self, request):
         serializer = self.MultipleLocationUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
@@ -399,8 +396,9 @@ class ItemLocationUpdateApi(APIView):
         print(f"Land back ID: {land_back_id}")
         for location_data in locations_data:
             item = get_object_or_404(Item, pk=location_data['item_id'])
-
-            if request.user != item.user:
+            user_emails = item.users.values_list('email', flat=True)
+            print(user_emails,request.user)
+            if request.user in user_emails:
                 raise PermissionDenied(f"You do not have permission to update the location of item {item.id}.")
 
             # 기존 위치 정보를 가져오거나 생성합니다.
