@@ -241,9 +241,9 @@ class UserLandItemListApi(APIView):
         items = serializers.SerializerMethodField()
 
         def get_lands(self,obj):
-            s3_base_url="https://s3.amazonaws.com/cognisle.shop/media/lands/background/"
-            land_img=f'{s3_base_url}land{obj.background}'
-            bg_img=f'{s3_base_url}bg{obj.background}'
+            s3_base_url="https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/background/"
+            land_img=f'{s3_base_url}land{obj.background}.png'
+            bg_img=f'{s3_base_url}bg{obj.background}.png'
             return {'state':obj.background,'land_img': land_img, 'bg_img': bg_img}
         
         def get_items(self, obj):
@@ -254,9 +254,9 @@ class UserLandItemListApi(APIView):
         items = serializers.SerializerMethodField()
 
         def get_lands(self, obj):
-            s3_base_url = "https://s3.amazonaws.com/cognisle.shop/media/lands/background/"
-            land_img = f'{s3_base_url}land{obj.background}'
-            bg_img = f'{s3_base_url}bg{obj.background}'
+            s3_base_url = "https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/background/"
+            land_img = f'{s3_base_url}land{obj.background}.png'
+            bg_img = f'{s3_base_url}bg{obj.background}.png'
             return {'state': obj.background, 'land_img': land_img, 'bg_img': bg_img}
 
         def get_items(self, obj):
@@ -275,8 +275,8 @@ class UserLandItemListApi(APIView):
                             'user':3,
                             'lands':{
                                 "state":"2",
-                                "land_img":"https://s3.amazonaws.com/cognisle.shop/media/lands/background/land2",
-                                "bg_img": "https://s3.amazonaws.com/cognisle.shop/media/lands/background/bg2"
+                                "land_img":"https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/background/land2",
+                                "bg_img": "https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/background/bg2"
                             },
                             "items": [
                                 {
@@ -330,8 +330,9 @@ class UserLandItemListApi(APIView):
             output_serializer = self.PublicLandItemOutputSerializer(lands_items, many=True)
         return Response(
             {'status':'sucess',
-             'data':{'user or land':user.email,
-                     'land&item':output_serializer.data}}, status=status.HTTP_200_OK)
+             'data':{'owner':user.email,
+                     'lands':[item.get('lands') for item in output_serializer.data],
+                     'items':[item.get('items') for item in output_serializer.data]}}, status=status.HTTP_200_OK)
 
 class ItemLocationUpdateApi(APIView):
     permission_classes = (IsAuthenticated,)
