@@ -10,4 +10,5 @@ urlpatterns=[
     path('<int:user_id>/',UserLandItemListApi.as_view(),name='lands_items'),
     path('item/',ItemLocationUpdateApi.as_view(),name='item_update'),
     path('item/create/',ItemCreateApi.as_view(),name='item_create'),
+    path('item/game/',ItemGetApi.as_view(),name='item_get'),
 ]

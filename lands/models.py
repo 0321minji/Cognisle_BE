@@ -26,4 +26,4 @@ class Item(models.Model):
 class Land(models.Model):
     #섬 타입(배경), 아이템(27가지:선택된 이미지에 대한 url과 (x,y,z)), 섬 주인(유저)
     background=models.CharField(max_length=10,default=1)    
-    user=models.ForeignKey('users.User',related_name='lands',on_delete=models.SET_NULL, null=True, blank=False)
+    user=models.OneToOneField('users.User',related_name='lands',on_delete=models.SET_NULL, null=True, blank=False)

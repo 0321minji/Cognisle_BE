@@ -433,3 +433,33 @@ class ItemLocationUpdateApi(APIView):
                 'land_background_id':land_back_id,
             }
         }, status=status.HTTP_200_OK)
+
+class ItemGetApi(APIView):
+    permission_classes=(IsAuthenticated,)
+    
+    class ItemGetInputSerializer(serializers.Serializer):
+        item_ids = serializers.ListField(child=serializers.IntegerField())
+
+    @transaction.atomic
+    def put(self,request):
+        serializers = self.ItemGetInputSerializer(data=request.data)
+        serializers.is_valid(raise_exception=True)
+        data=serializers.validated_data
+        
+        item_ids = data.get('item_ids')
+        new_item_ids=[]
+        
+        for item_id in item_ids:
+            item = get_object_or_404(Item,pk=item_id)
+            user_emails = item.users.values_list('email', flat=True)
+            if request.user not in user_emails:
+                item.users.add(request.user)
+                item.save()  # 변경 사항 저장
+                Location.objects.create(
+                    item=item,
+                    land=request.user.lands,
+                    x=0,y=0,z=0,
+                )
+                new_item_ids.append(item_id)
+        return Response({'status': 'success',
+                         'data':new_item_ids}, status=200)   
