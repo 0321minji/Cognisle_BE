@@ -400,7 +400,7 @@ class ItemLocationUpdateApi(APIView):
                 raise PermissionDenied(f"You do not have permission to update the location of item {item.id}.")
 
             # 기존 위치 정보를 가져오거나 생성합니다.
-            location, created = Location.objects.get_or_create(item=item)
+            location, created = Location.objects.get_or_create(item=item,land=request.user.lands)
             
             # 위치 정보를 업데이트합니다.
             location.x = location_data['x']
