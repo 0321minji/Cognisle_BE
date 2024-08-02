@@ -439,7 +439,26 @@ class ItemGetApi(APIView):
     
     class ItemGetInputSerializer(serializers.Serializer):
         item_ids = serializers.ListField(child=serializers.IntegerField())
-
+    @swagger_auto_schema(
+        request_body=ItemGetInputSerializer,
+        security=[],
+        operation_id='아이템 획득 API',
+        operation_description="게임을 통해 얻은 아이템들 중 새로 획득한 아이템을 저장하는 API",
+        responses={
+            "200":openapi.Response(
+                description="OK",
+                examples={
+                    "application/json":{
+                        "status":"success",
+                        "new_item_ids":[1,5,13]
+                    }
+                }
+            ),
+            "400":openapi.Response(
+                description="Bad Request",
+            ),
+        }
+    )
     @transaction.atomic
     def put(self,request):
         serializers = self.ItemGetInputSerializer(data=request.data)
@@ -462,4 +481,4 @@ class ItemGetApi(APIView):
                 )
                 new_item_ids.append(item_id)
         return Response({'status': 'success',
-                         'data':new_item_ids}, status=200)   
+                         'new_item_ids':new_item_ids}, status=200)   
