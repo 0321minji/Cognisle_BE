@@ -54,6 +54,9 @@ class UserService:
             'refresh':str(token),
             'access':str(token.access_token),
             'name':user.name,
+            'user_id':user.pk,
+            'dsId':user.dsId,
+            'dsName':user.dsName,
         }
         
         return data

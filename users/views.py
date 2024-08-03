@@ -71,6 +71,9 @@ class UserLoginApi(APIView):
         refresh=serializers.CharField()
         access=serializers.CharField()
         name=serializers.CharField()
+        dsName=serializers.CharField()
+        dsId=serializers.CharField()
+        user_id=serializers.CharField()
         
     @swagger_auto_schema(
         request_body=UserLoginInputSerializer,
@@ -111,6 +114,7 @@ class UserLoginApi(APIView):
         output_serializer.is_valid(raise_exception=True)
         
         user = get_object_or_404(User, email=data.get('email'))
+
         landcreate_data = None
         try:
             land = Land.objects.get(user=user)
@@ -145,7 +149,6 @@ class UserLoginApi(APIView):
         return Response({
             'status': 'success',
             'data': output_serializer.data,
-            'land': landcreate_data,
         }, status=status.HTTP_200_OK)
     
 # class UserListApi(APIView):
