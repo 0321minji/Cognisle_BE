@@ -27,14 +27,14 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser,PermissionsMixin,TimeStampedModel):
     email = models.EmailField(max_length=64,unique=True)
-    dsId = models.CharField(max_length=64,unique=True)
+    dsId = models.CharField(max_length=64,unique=True,null=True,blank=True)
     name = models.CharField(max_length=20)
-    dsName=models.CharField(max_length=20,null=True)
+    dsName=models.CharField(max_length=20,null=True,blank=True)
     is_active = models.BooleanField(default = True)
     is_superuser = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['dsId', 'name','dsName']
+    REQUIRED_FIELDS = [ 'name']
     objects = UserManager()
 
     def __str__(self):

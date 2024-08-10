@@ -18,12 +18,11 @@ class UserService:
     def __init__(self):
         pass
     
-    def user_sign_up(email:str,password:str, dsId:str, name:str,dsName:str):
+    def user_sign_up(email:str,password:str, name:str,dsId:str=None, dsName:str=None):
 
         user=User(email=email, password=password, dsId=dsId,name=name,dsName=dsName)
         
         user.set_password(password)
-        user.is_active=False
         user.save()
         
         data={
