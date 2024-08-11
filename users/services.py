@@ -54,8 +54,8 @@ class UserService:
             'access':str(token.access_token),
             'name':user.name,
             'user_id':user.pk,
-            'dsId':user.dsId,
-            'dsName':user.dsName,
+            'dsId':user.dsId or '' ,
+            'dsName':user.dsName or '',
         }
         
         return data

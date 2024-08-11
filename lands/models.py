@@ -14,11 +14,12 @@ class Location(models.Model):
 
 #일단 lands 앱 안에 item 모델도 생성하긴 했는데 따로 앱 만드는게 좋을지 아니면 그냥 list api정도만 만들어도 괜찮을지   
 class ItemImage(models.Model):
-    image = models.ImageField(upload_to=get_item_pic_upload_path, default='item_image.png')
+    #image = models.ImageField(upload_to=get_item_pic_upload_path, default='item_image.png')
+    image=models.URLField()
     
 #하나의 이미지로 여러 아이템 생성 가능 > 한 아이템당 show 값 지니는 거 맞음 & 한 item 마다 location 가지니까 manytomany onetoone으로 수정
 class Item(models.Model):
-    item_image = models.ForeignKey(ItemImage, on_delete=models.CASCADE, related_name='items')
+    item_image = models.OneToOneField(ItemImage, on_delete=models.CASCADE, related_name='items')
     #show=models.BooleanField(default=False)
     #lands=models.Field('Land',related_name='items')
     users=models.ManyToManyField('users.User', related_name='items')
