@@ -51,7 +51,7 @@ class ItemSelector:
 class LandSelector:
     @staticmethod
     def get_user_items(user_id):
-        items = Item.objects.filter(users__id=user_id).prefetch_related('item_image', 'locations')
+        items = Item.objects.filter(users__id=user_id).prefetch_related('item_image', 'locations')   
         return items
 
     @staticmethod

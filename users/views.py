@@ -75,8 +75,8 @@ class UserLoginApi(APIView):
         refresh=serializers.CharField()
         access=serializers.CharField()
         name=serializers.CharField()
-        dsName=serializers.CharField()
-        dsId=serializers.CharField()
+        dsName=serializers.CharField(required=False,allow_blank=True)
+        dsId=serializers.CharField(required=False,allow_null=True,allow_blank=True)
         user_id=serializers.CharField()
         
     @swagger_auto_schema(
@@ -136,7 +136,8 @@ class UserLoginApi(APIView):
                     'Authorization': f'Bearer {user_token}'
                 }
                 print(headers)
-                landcreate_response = requests.post('https://www.cognisle.shop/lands/create/', json={
+                #landcreate_response = requests.post('http://127.0.0.1:8000/lands/', json={
+                landcreate_response = requests.post('https://www.cognisle.shop/lands/', json={
                     'background': '1',
                     'items':[]
                 }, headers=headers)

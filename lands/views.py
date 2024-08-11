@@ -23,7 +23,7 @@ class LandCreateApi(APIView):
     
     class LandCreateInputSerializer(serializers.Serializer):
         background=serializers.CharField(required=False,default=1)
-        
+        user_id=serializers.CharField(required=False)
     @swagger_auto_schema(
         request_body=LandCreateInputSerializer,
         security=[],
@@ -53,7 +53,8 @@ class LandCreateApi(APIView):
         service=LandCoordinatorService(user=request.user)
         
         land=service.create(
-            background=data.get('background')
+            background=data.get('background'),
+            user_id=data.get('user_id')
         )
         
         if land:
@@ -115,6 +116,15 @@ class ItemCreateApi(APIView):
     
     class ItemCreateInputSerializer(serializers.Serializer):
         image_id = serializers.CharField()
+    class LocationUpdateInputSerializer(serializers.Serializer):
+        item_id = serializers.IntegerField()
+        x = serializers.CharField(max_length=100)
+        y = serializers.CharField(max_length=100)
+        z = serializers.CharField(max_length=100)
+
+    class MultipleLocationUpdateSerializer(serializers.Serializer):
+        locations = serializers.ListField(child=serializers.DictField(),required=False)
+        land_back_id = serializers.IntegerField(required=False, allow_null=True)
 
     @swagger_auto_schema(
         request_body=ItemCreateInputSerializer,
@@ -148,20 +158,110 @@ class ItemCreateApi(APIView):
         
         item=ItemService.create(
             image_id=data.get('image_id'),
-            show=False,
             # user=request.user,
         )
         
-        
+        print(item.item_image)
         return Response({
             'status':'success',
             'data':{
                 'item_pk':item.pk,
-                'item_image':item.item_image.image.url,
-                'item_show':item.show,
+                'item_image':item.item_image.image,
             }
         })
 
+    @swagger_auto_schema(
+        request_body=MultipleLocationUpdateSerializer,
+        security=[],
+        operation_id='아이템 위치 변경 API',
+        operation_description="섬꾸미기를 통한 아이템들의 변경된 위치들을 받아서 변경하는 API",
+        responses={
+            "200":openapi.Response(
+                description="OK",
+                examples={
+                    "application/json":{
+                        "status":"success",
+                        "data":{
+                            'updated_items': [{
+                                'id': 2,
+                                'locations': {
+                                    'x': 20,
+                                    'y': 30,
+                                    'z': 5
+                                }
+                            },{
+                                'id': 5,
+                                'locations': {
+                                    'x': 44,
+                                    'y': 30,
+                                    'z': 4
+                                }
+                            }
+                                              
+                            ],
+                            'land_background_id':1,
+                        }
+                    }
+                }
+            ),
+            "400":openapi.Response(
+                description="Bad Request",
+            ),
+        }
+    )    
+    
+    @transaction.atomic
+    def put(self, request):
+        serializer = self.MultipleLocationUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        
+        land_back_id=data.get('land_back_id')
+        locations_data = data.get('locations',[])
+        
+        print(f"Land back ID: {land_back_id}")
+        for location_data in locations_data:
+            item = get_object_or_404(Item, pk=location_data['item_id'])
+            user_emails = item.users.values_list('email', flat=True)
+            print(user_emails,request.user)
+            if request.user in user_emails:
+                raise PermissionDenied(f"You do not have permission to update the location of item {item.id}.")
+
+            # 기존 위치 정보를 가져오거나 생성합니다.
+            location, created = Location.objects.get_or_create(item=item,land=request.user.lands)
+            
+            # 위치 정보를 업데이트합니다.
+            location.x = location_data['x']
+            location.y = location_data['y']
+            location.z = location_data['z']
+            location.save()
+                
+            if created:
+                item.show=True
+                item.save()
+            
+        if land_back_id:
+            land = get_object_or_404(Land,user=request.user)
+            if request.user !=land.user:
+                raise PermissionDenied(f"You do not have permission to update the land of {land.user}.")
+            land.background=land_back_id 
+            land.save()
+            
+        return Response({
+            'status': 'success',
+            'data': {
+                'updated_items': [{
+                    'id': location_data['item_id'],
+                    'locations': {
+                        'x': location_data['x'],
+                        'y': location_data['y'],
+                        'z': location_data['z']
+                    }
+                } for location_data in locations_data],
+                'land_background_id':land_back_id,
+            }
+        }, status=status.HTTP_200_OK)    
+        
 #아이템 show 변경 api(사용->사용X시)
 class ItemShowUpdateApi(APIView):
     permission_classes=(IsAuthenticated,)
@@ -482,3 +582,28 @@ class ItemGetApi(APIView):
                 new_item_ids.append(item_id)
         return Response({'status': 'success',
                          'new_item_ids':new_item_ids}, status=200)   
+
+# class ItemImageSerializer(serializers.Serializer):
+#     #item
+class ItemSerializer(serializers.Serializer):
+    item_image = serializers.SerializerMethodField()
+    id = serializers.IntegerField()
+    
+    def get_item_image(self, obj):
+        return obj.item_image.image
+class ItemListApi(APIView):
+    permission_classes=(AllowAny,)
+    
+    class ItemListOutputSerializer(serializers.Serializer):
+        items = ItemSerializer(many=True)
+        
+    def get(self,request,user_id):
+        user=get_object_or_404(User,pk=user_id)
+        items=LandSelector.get_user_items(user_id=user_id)
+        
+        output_serializer=self.ItemListOutputSerializer({'items': items})
+        
+        return Response({
+            'status':'success',
+            'data':output_serializer.data
+        },status=status.HTTP_200_OK)
