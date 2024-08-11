@@ -10,9 +10,16 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from users.services import UserService
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-import requests
+import requests, threading
 from django.shortcuts import get_object_or_404
 
+def post_request_in_background(url, headers):
+    try:
+        response = requests.post(url, headers=headers)
+        print("Background request complete:", response.status_code)
+    except Exception as e:
+        print("Background request failed:", str(e))
+        
 class UserSignUpApi(APIView):
     permission_classes=(AllowAny,)
     
@@ -135,12 +142,15 @@ class UserLoginApi(APIView):
                 headers = {
                     'Authorization': f'Bearer {user_token}'
                 }
-                print(headers)
-                #landcreate_response = requests.post('http://127.0.0.1:8000/lands/', json={
-                landcreate_response = requests.post('https://www.cognisle.shop/lands/', headers=headers)
-                print(landcreate_response.status_code, landcreate_response.content)
-                landcreate_response.raise_for_status()
-                landcreate_data = landcreate_response.json()
+                #스레드로 비동기 요청 
+                threading.Thread(target=post_request_in_background, args=('https://www.cognisle.shop/lands/', headers)).start()
+                #threading.Thread(target=post_request_in_background, args=('http://127.0.0.1:8000/lands/', headers)).start()
+                # print(headers)
+                # #landcreate_response = requests.post('http://127.0.0.1:8000/lands/', headers=headers)
+                # landcreate_response = requests.post('https://www.cognisle.shop/lands/', headers=headers)
+                # print(landcreate_response.status_code, landcreate_response.content)
+                # landcreate_response.raise_for_status()
+                # landcreate_data = landcreate_response.json()
             except requests.exceptions.RequestException as e:
                 return Response({
                     'status': 'error',
