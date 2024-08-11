@@ -137,10 +137,7 @@ class UserLoginApi(APIView):
                 }
                 print(headers)
                 #landcreate_response = requests.post('http://127.0.0.1:8000/lands/', json={
-                landcreate_response = requests.post('https://www.cognisle.shop/lands/', json={
-                    'background': '1',
-                    'items':[]
-                }, headers=headers)
+                landcreate_response = requests.post('https://www.cognisle.shop/lands/', headers=headers)
                 print(landcreate_response.status_code, landcreate_response.content)
                 landcreate_response.raise_for_status()
                 landcreate_data = landcreate_response.json()
