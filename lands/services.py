@@ -98,12 +98,13 @@ class ItemService:
             return True
     
     @staticmethod
-    def create(image_id:str):
+    def create(image_id:str,no:int):
         item_image=get_object_or_404(ItemImage, pk=image_id)
         print(item_image.image)
         try:
             item=Item(
                 item_image=item_image,
+                no=no,
             )
             item.full_clean()
             item.save()

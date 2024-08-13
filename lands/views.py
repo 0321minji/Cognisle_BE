@@ -118,8 +118,9 @@ class ItemCreateApi(APIView):
     
     class ItemCreateInputSerializer(serializers.Serializer):
         image_id = serializers.CharField()
+        no=serializers.IntegerField()
     class LocationUpdateInputSerializer(serializers.Serializer):
-        item_id = serializers.IntegerField()
+        item_no = serializers.IntegerField()
         x = serializers.CharField(max_length=100)
         y = serializers.CharField(max_length=100)
         z = serializers.CharField(max_length=100)
@@ -160,6 +161,7 @@ class ItemCreateApi(APIView):
         
         item=ItemService.create(
             image_id=data.get('image_id'),
+            no=data.get('no'),
             # user=request.user,
         )
         
@@ -169,6 +171,7 @@ class ItemCreateApi(APIView):
             'data':{
                 'item_pk':item.pk,
                 'item_image':item.item_image.image,
+                'item_no':item.no,
             }
         })
 
@@ -223,7 +226,7 @@ class ItemCreateApi(APIView):
         
         print(f"Land back ID: {land_back_id}")
         for location_data in locations_data:
-            item = get_object_or_404(Item, pk=location_data['item_id'])
+            item = get_object_or_404(Item, no=location_data['item_no'])
             user_emails = item.users.values_list('email', flat=True)
             print(user_emails,request.user)
             if request.user in user_emails:
@@ -250,7 +253,7 @@ class ItemCreateApi(APIView):
             'status': 'success',
             'data': {
                 'updated_items': [{
-                    'id': location_data['item_id'],
+                    'no': location_data['item_no'],
                     'locations': {
                         'x': location_data['x'],
                         'y': location_data['y'],
@@ -264,15 +267,6 @@ class ItemCreateApi(APIView):
 #아이템 show 변경 api(사용->사용X시)
 class ItemShowUpdateApi(APIView):
     permission_classes=(IsAuthenticated,)
-    # class LocationUpdateInputSerializer(serializers.Serializer):
-    #     item_id = serializers.IntegerField()
-    #     x = serializers.CharField(max_length=100)
-    #     y = serializers.CharField(max_length=100)
-    #     z = serializers.CharField(max_length=100)
-
-    # class MultipleLocationUpdateSerializer(serializers.Serializer):
-    #     locations = serializers.ListField(child=serializers.DictField(),required=False)
-    #     land_back_id = serializers.IntegerField(required=False, allow_null=True)
     class ItemShowUpdateSerializer(serializers.Serializer):
         item_nos = serializers.ListField(child=serializers.IntegerField())
         
@@ -305,14 +299,14 @@ class ItemShowUpdateApi(APIView):
         
         item_nos=data.get('item_nos')
         result=[]
-        for item_id in item_nos:
-            item = get_object_or_404(Item, pk=item_id)
+        for item_no in item_nos:
+            item = get_object_or_404(Item, no=item_no)
             # 현재 로그인한 유저가 해당 아이템의 소유자인지 확인
             user_emails = item.users.values_list('email', flat=True)
             if request.user.email not in user_emails:
                 raise PermissionDenied("You do not have permission to update this item.")
             
-            result.append({"item_id":item.pk, "state":ItemService.show_or_no(item=item,user=request.user)})
+            result.append({"item_no":item.no, "state":ItemService.show_or_no(item=item,user=request.user)})
         
         return Response({
             'status':'success',
@@ -421,7 +415,7 @@ class UserLandItemListApi(APIView):
             ),
         }
     )    
-            
+    ## 쿼리 파라미터로 변경 & 유저 아이디 대신 유저 이메일로 조회        
     def get(self, request, user_id):
         user = get_object_or_404(User, pk=user_id)
         print(user.email)
@@ -440,115 +434,11 @@ class UserLandItemListApi(APIView):
                      'land':output_serializer.data.get('land'),
                      'items':output_serializer.data.get('items')}}, status=status.HTTP_200_OK)
 
-class ItemLocationUpdateApi(APIView):
-    permission_classes = (IsAuthenticated,)
-    class LocationUpdateInputSerializer(serializers.Serializer):
-        item_id = serializers.IntegerField()
-        x = serializers.CharField(max_length=100)
-        y = serializers.CharField(max_length=100)
-        z = serializers.CharField(max_length=100)
-
-    class MultipleLocationUpdateSerializer(serializers.Serializer):
-        locations = serializers.ListField(child=serializers.DictField(),required=False)
-        land_back_id = serializers.IntegerField(required=False, allow_null=True)
-
-    @swagger_auto_schema(
-        request_body=MultipleLocationUpdateSerializer,
-        security=[],
-        operation_id='아이템 위치 변경 API',
-        operation_description="섬꾸미기를 통한 아이템들의 변경된 위치들을 받아서 변경하는 API",
-        responses={
-            "200":openapi.Response(
-                description="OK",
-                examples={
-                    "application/json":{
-                        "status":"success",
-                        "data":{
-                            'updated_items': [{
-                                'id': 2,
-                                'locations': {
-                                    'x': 20,
-                                    'y': 30,
-                                    'z': 5
-                                }
-                            },{
-                                'id': 5,
-                                'locations': {
-                                    'x': 44,
-                                    'y': 30,
-                                    'z': 4
-                                }
-                            }
-                                              
-                            ],
-                            'land_background_id':1,
-                        }
-                    }
-                }
-            ),
-            "400":openapi.Response(
-                description="Bad Request",
-            ),
-        }
-    )    
-    
-    @transaction.atomic
-    def put(self, request):
-        serializer = self.MultipleLocationUpdateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
-        
-        land_back_id=data.get('land_back_id')
-        locations_data = data.get('locations',[])
-        
-        print(f"Land back ID: {land_back_id}")
-        for location_data in locations_data:
-            item = get_object_or_404(Item, pk=location_data['item_id'])
-            user_emails = item.users.values_list('email', flat=True)
-            print(user_emails,request.user)
-            if request.user in user_emails:
-                raise PermissionDenied(f"You do not have permission to update the location of item {item.id}.")
-
-            # 기존 위치 정보를 가져오거나 생성합니다.
-            location, created = Location.objects.get_or_create(item=item,land=request.user.lands)
-            
-            # 위치 정보를 업데이트합니다.
-            location.x = location_data['x']
-            location.y = location_data['y']
-            location.z = location_data['z']
-            location.save()
-                
-            if created:
-                item.show=True
-                item.save()
-            
-        if land_back_id:
-            land = get_object_or_404(Land,user=request.user)
-            if request.user !=land.user:
-                raise PermissionDenied(f"You do not have permission to update the land of {land.user}.")
-            land.background=land_back_id 
-            land.save()
-            
-        return Response({
-            'status': 'success',
-            'data': {
-                'updated_items': [{
-                    'id': location_data['item_id'],
-                    'locations': {
-                        'x': location_data['x'],
-                        'y': location_data['y'],
-                        'z': location_data['z']
-                    }
-                } for location_data in locations_data],
-                'land_background_id':land_back_id,
-            }
-        }, status=status.HTTP_200_OK)
-
 class ItemGetApi(APIView):
     permission_classes=(IsAuthenticated,)
     
     class ItemGetInputSerializer(serializers.Serializer):
-        item_ids = serializers.ListField(child=serializers.IntegerField())
+        item_nos = serializers.ListField(child=serializers.IntegerField())
     @swagger_auto_schema(
         request_body=ItemGetInputSerializer,
         security=[],
@@ -575,11 +465,11 @@ class ItemGetApi(APIView):
         serializers.is_valid(raise_exception=True)
         data=serializers.validated_data
         
-        item_ids = data.get('item_ids')
-        new_item_ids=[]
+        item_nos = data.get('item_nos')
+        new_item_nos=[]
         
-        for item_id in item_ids:
-            item = get_object_or_404(Item,pk=item_id)
+        for item_no in item_nos:
+            item = get_object_or_404(Item,no=item_no)
             user_emails = item.users.values_list('email', flat=True)
             if request.user.email not in user_emails:
                 item.users.add(request.user)
@@ -589,9 +479,9 @@ class ItemGetApi(APIView):
                     land=request.user.lands,
                     x=0,y=0,z=0,
                 )
-                new_item_ids.append(item_id)
+                new_item_nos.append(item_no)
         return Response({'status': 'success',
-                         'new_item_ids':new_item_ids}, status=200)   
+                         'new_item_ids':new_item_nos}, status=200)   
 
 # class ItemImageSerializer(serializers.Serializer):
 #     #item
@@ -601,6 +491,8 @@ class ItemSerializer(serializers.Serializer):
     
     def get_item_image(self, obj):
         return obj.item_image.image
+
+## 얘도 쿼리로 수정 && 유저 이메일로 조회
 class ItemListApi(APIView):
     permission_classes=(AllowAny,)
     
