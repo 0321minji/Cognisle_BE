@@ -59,12 +59,13 @@ class ItemImageService:
         pass
     
     @staticmethod
-    def create(image:ImageFile):
+    def create(image:ImageFile,name:str):
         img_url=s3_file_upload_by_file_data(
             upload_file=image,
             region_name=development.AWS_S3_REGION_NAME,
             bucket_name=development.AWS_STORAGE_BUCKET_NAME,
-            bucket_path=f'media/lands/item/pic'
+            bucket_path=f'media/items',
+            file_name=name,
         )
         item_image=ItemImage(image=img_url)
         item_image.save()

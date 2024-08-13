@@ -73,6 +73,7 @@ class ItemImageCreateApi(APIView):
     
     class ItemImageCreateInputSerializer(serializers.Serializer):
         image=serializers.ImageField()
+        name=serializers.CharField(required=False)
     
     @swagger_auto_schema(
         request_body=ItemImageCreateInputSerializer,
@@ -103,6 +104,7 @@ class ItemImageCreateApi(APIView):
         
         item_img_url,image_pk=ItemImageService.create( 
             image=data.get('image'),
+            name=data.get('name'),
         )
         
         return Response({
