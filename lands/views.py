@@ -118,6 +118,7 @@ class ItemCreateApi(APIView):
     
     class ItemCreateInputSerializer(serializers.Serializer):
         image_id = serializers.CharField()
+        no=serializers.IntegerField()
     class LocationUpdateInputSerializer(serializers.Serializer):
         item_id = serializers.IntegerField()
         x = serializers.CharField(max_length=100)
@@ -160,6 +161,7 @@ class ItemCreateApi(APIView):
         
         item=ItemService.create(
             image_id=data.get('image_id'),
+            no=data.get('no'),
             # user=request.user,
         )
         
@@ -169,6 +171,7 @@ class ItemCreateApi(APIView):
             'data':{
                 'item_pk':item.pk,
                 'item_image':item.item_image.image,
+                'item_no':item.no,
             }
         })
 
