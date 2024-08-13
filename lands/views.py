@@ -231,16 +231,13 @@ class ItemCreateApi(APIView):
 
             # 기존 위치 정보를 가져오거나 생성합니다.
             location, created = Location.objects.get_or_create(item=item,land=request.user.lands)
-            
+            if not location.show:
+                location.show=True
             # 위치 정보를 업데이트합니다.
             location.x = location_data['x']
             location.y = location_data['y']
             location.z = location_data['z']
             location.save()
-                
-            if created:
-                item.show=True
-                item.save()
             
         if land_back_id:
             land = get_object_or_404(Land,user=request.user)
@@ -573,7 +570,7 @@ class ItemGetApi(APIView):
         for item_id in item_ids:
             item = get_object_or_404(Item,pk=item_id)
             user_emails = item.users.values_list('email', flat=True)
-            if request.user not in user_emails:
+            if request.user.email not in user_emails:
                 item.users.add(request.user)
                 item.save()  # 변경 사항 저장
                 Location.objects.create(
