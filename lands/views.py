@@ -264,9 +264,17 @@ class ItemCreateApi(APIView):
 #아이템 show 변경 api(사용->사용X시)
 class ItemShowUpdateApi(APIView):
     permission_classes=(IsAuthenticated,)
-    
+    # class LocationUpdateInputSerializer(serializers.Serializer):
+    #     item_id = serializers.IntegerField()
+    #     x = serializers.CharField(max_length=100)
+    #     y = serializers.CharField(max_length=100)
+    #     z = serializers.CharField(max_length=100)
+
+    # class MultipleLocationUpdateSerializer(serializers.Serializer):
+    #     locations = serializers.ListField(child=serializers.DictField(),required=False)
+    #     land_back_id = serializers.IntegerField(required=False, allow_null=True)
     class ItemShowUpdateSerializer(serializers.Serializer):
-        item_id = serializers.IntegerField()
+        item_nos = serializers.ListField(child=serializers.IntegerField())
         
     @swagger_auto_schema(
         request_body=ItemShowUpdateSerializer,
@@ -290,22 +298,25 @@ class ItemShowUpdateApi(APIView):
             ),
         }
     )    
-    def post(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         serializer = self.ItemShowUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         
-        item_id=data.get('item_id')
-        item = get_object_or_404(Item, pk=item_id)
-        # 현재 로그인한 유저가 해당 아이템의 소유자인지 확인
-        if item.user != request.user:
-            raise PermissionDenied("You do not have permission to update this item.")
-        
-        shows = ItemService.show_or_no(item=item)
+        item_nos=data.get('item_nos')
+        result=[]
+        for item_id in item_nos:
+            item = get_object_or_404(Item, pk=item_id)
+            # 현재 로그인한 유저가 해당 아이템의 소유자인지 확인
+            user_emails = item.users.values_list('email', flat=True)
+            if request.user.email not in user_emails:
+                raise PermissionDenied("You do not have permission to update this item.")
+            
+            result.append({"item_id":item.pk, "state":ItemService.show_or_no(item=item,user=request.user)})
         
         return Response({
             'status':'success',
-            'data':{'show':shows},
+            'data':{'show':result},
         },status=status.HTTP_200_OK)
 
 

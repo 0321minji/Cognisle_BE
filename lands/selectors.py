@@ -45,8 +45,13 @@ class ItemSelector:
             item_dtos.append(item_data)
         return item_dtos
 
-    def show(self, item: Item):
-        return item.show
+    def show(self, item: Item, user:User):
+        locations = Location.objects.get(item=item, land__user=user)
+        return locations.show
+    
+    def locations(self, item:Item, user:User):
+        locations =Location.objects.get(item=item,land__user=user)
+        return locations
     
 class LandSelector:
     @staticmethod
@@ -58,3 +63,9 @@ class LandSelector:
     def get_user_land(user_id):
         land = Land.objects.get(user__id=user_id)
         return land
+    
+class LocationSelector:
+    @staticmethod
+    def show(self, location:Location):
+        return location.show
+    
