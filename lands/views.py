@@ -570,7 +570,7 @@ class ItemGetApi(APIView):
         for item_id in item_ids:
             item = get_object_or_404(Item,pk=item_id)
             user_emails = item.users.values_list('email', flat=True)
-            if request.user not in user_emails:
+            if request.user.email not in user_emails:
                 item.users.add(request.user)
                 item.save()  # 변경 사항 저장
                 Location.objects.create(
