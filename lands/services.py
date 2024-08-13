@@ -76,23 +76,26 @@ class ItemService:
     def __init__(self):
         pass
     @staticmethod
-    # def show_or_no(item:Item)->bool:
-    #     selector=ItemSelector()
-    #     if selector.show(item=item):
-    #         item.show=False
-            
-    #         item.full_clean()
-    #         item.save()
-    #         return False
-    #     else:
-    #         item.show=True
-    #         item.full_clean()
-    #         item.save()
-    #         # location 값이 없으면 기본값 설정
-    #         if not item.locations.exists():
-    #             default_location = {'x': '30', 'y': '30', 'z': '3'}
-    #             Location.objects.create(item=item, **default_location)
-    #         return True
+    def show_or_no(item:Item,user:User)->bool:
+        selector=ItemSelector()
+        location=selector.locations(item=item,user=user)
+        if location.show:
+            # item.show=False
+            # item.full_clean()
+            # item.save()
+            location.show=False
+            location.full_clean()
+            location.save()
+            return False
+        else:
+            location.show=True
+            location.full_clean()
+            location.save()
+            # # location 값이 없으면 기본값 설정
+            # if not item.locations.exists():
+            #     default_location = {'x': '0', 'y': '0', 'z': '0'}
+            #     Location.objects.create(item=item, **default_location)
+            return True
     
     @staticmethod
     def create(image_id:str):
