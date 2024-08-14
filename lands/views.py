@@ -59,7 +59,7 @@ class LandApi(APIView):
             s3_base_url = "https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/background/"
             land_img = f'{s3_base_url}land{obj.background}.png'
             bg_img = f'{s3_base_url}bg{obj.background}.png'
-            return {'state': obj.background, 'land_img': land_img, 'bg_img': bg_img}
+            return {'state': int(obj.background), 'land_img': land_img, 'bg_img': bg_img}
 
         def get_items(self, obj):
             request = self.context.get('request')
