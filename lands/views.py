@@ -46,8 +46,8 @@ class LandApi(APIView):
 
         def get_locations(self, obj):
             user_email = self.context.get('user_email')
-            locations = obj.locations.filter(land__user__email=user_email)
-            return LandApi.LocationSerializer(locations, many=True).data
+            locations = obj.locations.get(land__user__email=user_email)
+            return LandApi.LocationSerializer(locations).data
     
     class LandItemOutputSerializer(serializers.Serializer):
         land = serializers.SerializerMethodField()
