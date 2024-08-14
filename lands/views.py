@@ -18,12 +18,64 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 # Create your views here.
-class LandCreateApi(APIView):
+class LandApi(APIView):
     permission_classes=(AllowAny,)
     
     class LandCreateInputSerializer(serializers.Serializer):
         background=serializers.CharField(required=False,default=1)
         user_id=serializers.CharField(required=False)
+    class UserLandItemListInputSerializer(serializers.Serializer):
+        email = serializers.CharField()
+        
+    class ItemImageSerializer(serializers.Serializer):
+        image = serializers.ImageField()
+
+    class LocationSerializer(serializers.Serializer):
+        x = serializers.CharField(max_length=100)
+        y = serializers.CharField(max_length=100)
+        z = serializers.CharField(max_length=100)
+        show = serializers.BooleanField()
+
+    class ItemSerializer(serializers.Serializer):
+        no = serializers.IntegerField()
+        item_image = serializers.SerializerMethodField()
+        locations = serializers.SerializerMethodField()
+
+        def get_item_image(self, obj):
+            return obj.item_image.image if obj.item_image else None
+
+        def get_locations(self, obj):
+            user_email = self.context.get('user_email')
+            locations = obj.locations.filter(land__user__email=user_email)
+            return LandApi.LocationSerializer(locations, many=True).data
+    
+    class LandItemOutputSerializer(serializers.Serializer):
+        land = serializers.SerializerMethodField()
+        items = serializers.SerializerMethodField()
+
+        def get_land(self, obj):
+            print(obj)
+            print(f"Object type: {type(obj)}")
+            s3_base_url = "https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/background/"
+            land_img = f'{s3_base_url}land{obj.background}.png'
+            bg_img = f'{s3_base_url}bg{obj.background}.png'
+            return {'state': obj.background, 'land_img': land_img, 'bg_img': bg_img}
+
+        def get_items(self, obj):
+            request = self.context.get('request')
+            items = self.context.get('items')
+        
+            if obj.user == request.user:
+                # 소유자면 모든 아이템 반환
+                return LandApi.ItemSerializer(items, many=True,context={'user_email':self.context.get('user_email')}).data
+            else:
+                # 사용된 아이템만 필터링하여 반환
+                used_items = []
+                for item in items:
+                    if item.locations.filter(land=obj, show=True).exists():
+                        used_items.append(item)
+                return LandApi.ItemSerializer(used_items, many=True,context={'user_email':self.context.get('user_email')}).data
+            
     @swagger_auto_schema(
         request_body=LandCreateInputSerializer,
         security=[],
@@ -67,7 +119,84 @@ class LandCreateApi(APIView):
                 'status': 'error',
                 'message': 'Failed to create land.'
             }, status=status.HTTP_400_BAD_REQUEST)
-            
+    @swagger_auto_schema(
+        query_serializer=UserLandItemListInputSerializer,
+        operation_id='섬 꾸미기 상태 조회 API',
+        operation_description="소유하고 있는 모든 아이템과 섬 상태를 조회하는 API(user=request)",
+        responses={
+            "200":openapi.Response(
+                description="OK",
+                examples={
+                    "application/json":{
+                        "status":"success",
+                        "data":{
+                            'user':3,
+                            'lands':{
+                                "state":"2",
+                                "land_img":"https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/background/land2",
+                                "bg_img": "https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/background/bg2"
+                            },
+                            "items": [
+                                {
+                                    "id": 1,
+                                    "show": 'true',
+                                    "item_image": "https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/item/pic/KakaoTalk_20240227_203618663.png",
+                                    "locations": [
+                                        {
+                                            "x": "100",
+                                            "y": "200",
+                                            "z": "300"
+                                        }
+                                    ]
+                                },
+                                    {
+                                    "id": 2,
+                                    "show": 'true',
+                                    "item_image": "https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/item/pic/1716722334.059527112cbccf5a3a4226aa1a504843bcc4ff.jpg",
+                                    "locations": [
+                                        {
+                                            "x": "400",
+                                            "y": "500",
+                                            "z": "600"
+                                        }
+                                    ]   
+                                }
+                            ]
+                        }
+                        
+                    }
+                }
+            ),
+            "400":openapi.Response(
+                description="Bad Request",
+            ),
+        }
+    )    
+    ## 쿼리 파라미터로 변경 & 유저 아이디 대신 유저 이메일로 조회        
+    def get(self, request):
+        email_serializer=self.UserLandItemListInputSerializer(data=request.query_params)
+        email_serializer.is_valid(raise_exception=True)
+        user_email=email_serializer.validated_data.get('email')
+        print(user_email)
+        user=get_object_or_404(User,email=user_email)
+        # user = get_object_or_404(User, pk=user_id)
+        print(user.email)
+        print(request.user.email)
+        # land = LandSelector.get_user_land(user_id=user_id)
+        land=LandSelector.get_user_land(user_email=user_email)
+        items=LandSelector.get_user_items(user_email=user_email)
+        logger.info(f"Lands and items retrieved: {land}")
+        output_serializer = self.LandItemOutputSerializer(land, context={'user_email':user_email,'request': request,'items':items})
+        # if request.user.id == user_id:
+        #     output_serializer = self.LandItemOutputSerializer(lands_items, many=True)
+        # else:
+        #     output_serializer = self.PublicLandItemOutputSerializer(lands_items, many=True)
+        return Response(
+            {'status':'sucess',
+             'data':{'owner':user.email,
+                     'land':output_serializer.data.get('land'),
+                     'items':output_serializer.data.get('items')}}, status=status.HTTP_200_OK)
+
 class ItemImageCreateApi(APIView):
     permission_classes=(IsAuthenticated,)
     
@@ -314,125 +443,137 @@ class ItemShowUpdateApi(APIView):
         },status=status.HTTP_200_OK)
 
 
-class UserLandItemListApi(APIView):
-    permission_classes = (IsAuthenticated,)
-
-    class ItemImageSerializer(serializers.Serializer):
-        image = serializers.ImageField()
-
-    class LocationSerializer(serializers.Serializer):
-        x = serializers.CharField(max_length=100)
-        y = serializers.CharField(max_length=100)
-        z = serializers.CharField(max_length=100)
-
-    class ItemSerializer(serializers.Serializer):
-        id = serializers.IntegerField()
-        item_image = serializers.SerializerMethodField()
-        locations = serializers.SerializerMethodField()
-
-        def get_item_image(self, obj):
-            return obj.item_image.image.url if obj.item_image else None
-
-        def get_locations(self, obj):
-            user_id = self.context.get('user_id')
-            locations = obj.locations.filter(land__user=user_id)
-            return UserLandItemListApi.LocationSerializer(locations, many=True).data
-    
-    class LandItemOutputSerializer(serializers.Serializer):
-        land = serializers.SerializerMethodField()
-        items = serializers.SerializerMethodField()
-
-        def get_land(self, obj):
-            s3_base_url = "https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/background/"
-            land_img = f'{s3_base_url}land{obj.background}.png'
-            bg_img = f'{s3_base_url}bg{obj.background}.png'
-            return {'state': obj.background, 'land_img': land_img, 'bg_img': bg_img}
-
-        def get_items(self, obj):
-            request = self.context.get('request')
-            items = self.context.get('items')
+# class UserLandItemListApi(APIView):
+#     permission_classes = (IsAuthenticated,)
+    # class UserLandItemListInputSerializer(serializers.Serializer):
+    #     email = serializers.CharField()
         
-            if obj.user == request.user:
-                # 소유자면 모든 아이템 반환
-                return UserLandItemListApi.ItemSerializer(items, many=True,context={'user_id':self.context.get('user_id')}).data
-            else:
-                # 사용된 아이템만 필터링하여 반환
-                used_items = []
-                for item in items:
-                    if item.locations.filter(land=obj, show=True).exists():
-                        used_items.append(item)
-                return UserLandItemListApi.ItemSerializer(used_items, many=True,context={'user_id':self.context.get('user_id')}).data
+    # class ItemImageSerializer(serializers.Serializer):
+    #     image = serializers.ImageField()
+
+    # class LocationSerializer(serializers.Serializer):
+    #     x = serializers.CharField(max_length=100)
+    #     y = serializers.CharField(max_length=100)
+    #     z = serializers.CharField(max_length=100)
+    #     show = serializers.BooleanField()
+
+    # class ItemSerializer(serializers.Serializer):
+    #     no = serializers.IntegerField()
+    #     item_image = serializers.SerializerMethodField()
+    #     locations = serializers.SerializerMethodField()
+
+    #     def get_item_image(self, obj):
+    #         return obj.item_image.image if obj.item_image else None
+
+    #     def get_locations(self, obj):
+    #         user_email = self.context.get('user_email')
+    #         locations = obj.locations.filter(land__user__email=user_email)
+    #         return UserLandItemListApi.LocationSerializer(locations, many=True).data
+    
+    # class LandItemOutputSerializer(serializers.Serializer):
+    #     land = serializers.SerializerMethodField()
+    #     items = serializers.SerializerMethodField()
+
+    #     def get_land(self, obj):
+    #         print(obj)
+    #         print(f"Object type: {type(obj)}")
+    #         s3_base_url = "https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/background/"
+    #         land_img = f'{s3_base_url}land{obj.background}.png'
+    #         bg_img = f'{s3_base_url}bg{obj.background}.png'
+    #         return {'state': obj.background, 'land_img': land_img, 'bg_img': bg_img}
+
+    #     def get_items(self, obj):
+    #         request = self.context.get('request')
+    #         items = self.context.get('items')
+        
+    #         if obj.user == request.user:
+    #             # 소유자면 모든 아이템 반환
+    #             return UserLandItemListApi.ItemSerializer(items, many=True,context={'user_email':self.context.get('user_email')}).data
+    #         else:
+    #             # 사용된 아이템만 필터링하여 반환
+    #             used_items = []
+    #             for item in items:
+    #                 if item.locations.filter(land=obj, show=True).exists():
+    #                     used_items.append(item)
+    #             return UserLandItemListApi.ItemSerializer(used_items, many=True,context={'user_email':self.context.get('user_email')}).data
             
-    @swagger_auto_schema(
-        operation_id='아이템 리스트 조회 API',
-        operation_description="소유하고 있는 모든 아이템과 섬 상태를 조회하는 API(user=request)",
-        responses={
-            "200":openapi.Response(
-                description="OK",
-                examples={
-                    "application/json":{
-                        "status":"success",
-                        "data":{
-                            'user':3,
-                            'lands':{
-                                "state":"2",
-                                "land_img":"https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/background/land2",
-                                "bg_img": "https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/background/bg2"
-                            },
-                            "items": [
-                                {
-                                    "id": 1,
-                                    "show": 'true',
-                                    "item_image": "https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/item/pic/KakaoTalk_20240227_203618663.png",
-                                    "locations": [
-                                        {
-                                            "x": "100",
-                                            "y": "200",
-                                            "z": "300"
-                                        }
-                                    ]
-                                },
-                                    {
-                                    "id": 2,
-                                    "show": 'true',
-                                    "item_image": "https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/item/pic/1716722334.059527112cbccf5a3a4226aa1a504843bcc4ff.jpg",
-                                    "locations": [
-                                        {
-                                            "x": "400",
-                                            "y": "500",
-                                            "z": "600"
-                                        }
-                                    ]   
-                                }
-                            ]
-                        }
+    # @swagger_auto_schema(
+    #     query_serializer=UserLandItemListInputSerializer,
+    #     operation_id='섬 꾸미기 상태 조회 API',
+    #     operation_description="소유하고 있는 모든 아이템과 섬 상태를 조회하는 API(user=request)",
+    #     responses={
+    #         "200":openapi.Response(
+    #             description="OK",
+    #             examples={
+    #                 "application/json":{
+    #                     "status":"success",
+    #                     "data":{
+    #                         'user':3,
+    #                         'lands':{
+    #                             "state":"2",
+    #                             "land_img":"https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/background/land2",
+    #                             "bg_img": "https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/background/bg2"
+    #                         },
+    #                         "items": [
+    #                             {
+    #                                 "id": 1,
+    #                                 "show": 'true',
+    #                                 "item_image": "https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/item/pic/KakaoTalk_20240227_203618663.png",
+    #                                 "locations": [
+    #                                     {
+    #                                         "x": "100",
+    #                                         "y": "200",
+    #                                         "z": "300"
+    #                                     }
+    #                                 ]
+    #                             },
+    #                                 {
+    #                                 "id": 2,
+    #                                 "show": 'true',
+    #                                 "item_image": "https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/item/pic/1716722334.059527112cbccf5a3a4226aa1a504843bcc4ff.jpg",
+    #                                 "locations": [
+    #                                     {
+    #                                         "x": "400",
+    #                                         "y": "500",
+    #                                         "z": "600"
+    #                                     }
+    #                                 ]   
+    #                             }
+    #                         ]
+    #                     }
                         
-                    }
-                }
-            ),
-            "400":openapi.Response(
-                description="Bad Request",
-            ),
-        }
-    )    
-    ## 쿼리 파라미터로 변경 & 유저 아이디 대신 유저 이메일로 조회        
-    def get(self, request, user_id):
-        user = get_object_or_404(User, pk=user_id)
-        print(user.email)
-        print(request.user.id)
-        land = LandSelector.get_user_land(user_id=user_id)
-        items=LandSelector.get_user_items(user_id=user_id)
-        logger.info(f"Lands and items retrieved: {land}")
-        output_serializer = self.LandItemOutputSerializer(land, context={'user_id':user_id,'request': request,'items':items})
-        # if request.user.id == user_id:
-        #     output_serializer = self.LandItemOutputSerializer(lands_items, many=True)
-        # else:
-        #     output_serializer = self.PublicLandItemOutputSerializer(lands_items, many=True)
-        return Response(
-            {'status':'sucess',
-             'data':{'owner':user.email,
-                     'land':output_serializer.data.get('land'),
-                     'items':output_serializer.data.get('items')}}, status=status.HTTP_200_OK)
+    #                 }
+    #             }
+    #         ),
+    #         "400":openapi.Response(
+    #             description="Bad Request",
+    #         ),
+    #     }
+    # )    
+    # ## 쿼리 파라미터로 변경 & 유저 아이디 대신 유저 이메일로 조회        
+    # def get(self, request):
+    #     email_serializer=self.UserLandItemListInputSerializer(data=request.query_params)
+    #     email_serializer.is_valid(raise_exception=True)
+    #     user_email=email_serializer.validated_data.get('email')
+    #     print(user_email)
+    #     user=get_object_or_404(User,email=user_email)
+    #     # user = get_object_or_404(User, pk=user_id)
+    #     print(user.email)
+    #     print(request.user.email)
+    #     # land = LandSelector.get_user_land(user_id=user_id)
+    #     land=LandSelector.get_user_land(user_email=user_email)
+    #     items=LandSelector.get_user_items(user_email=user_email)
+    #     logger.info(f"Lands and items retrieved: {land}")
+    #     output_serializer = self.LandItemOutputSerializer(land, context={'user_email':user_email,'request': request,'items':items})
+    #     # if request.user.id == user_id:
+    #     #     output_serializer = self.LandItemOutputSerializer(lands_items, many=True)
+    #     # else:
+    #     #     output_serializer = self.PublicLandItemOutputSerializer(lands_items, many=True)
+    #     return Response(
+    #         {'status':'sucess',
+    #          'data':{'owner':user.email,
+    #                  'land':output_serializer.data.get('land'),
+    #                  'items':output_serializer.data.get('items')}}, status=status.HTTP_200_OK)
 
 class ItemGetApi(APIView):
     permission_classes=(IsAuthenticated,)
