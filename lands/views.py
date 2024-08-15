@@ -359,7 +359,7 @@ class ItemCreateApi(APIView):
             item = get_object_or_404(Item, no=location_data['no'])
             user_emails = item.users.values_list('email', flat=True)
             if request.user.email not in user_emails:
-                raise PermissionDenied(f"You do not have permission to update the location of item {item.id}.")
+                raise PermissionDenied(f"You do not have permission to update the location of item {item.no}.")
 
             # 기존 위치 정보를 가져오거나 생성합니다.
             location, created = Location.objects.get_or_create(item=item,land=request.user.lands)
