@@ -10,6 +10,6 @@ urlpatterns=[
     #path('items/',ItemLocationUpdateApi.as_view(),name='item_update'),
     path('items/',ItemCreateApi.as_view(),name='item_create'),
     path('items/game/',ItemGetApi.as_view(),name='item_get'),
-    path('items/<int:user_id>/',ItemListApi.as_view(),name='item_list'),
+    #path('items/list/',ItemListApi.as_view(),name='item_list'),
     #path('items/',AllItemListApi.as_view(),name='all_item_list'),
 ]
