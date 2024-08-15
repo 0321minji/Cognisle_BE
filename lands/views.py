@@ -249,13 +249,14 @@ class ItemCreateApi(APIView):
         image_id = serializers.CharField()
         no=serializers.IntegerField()
     class LocationUpdateInputSerializer(serializers.Serializer):
-        item_no = serializers.IntegerField()
-        x = serializers.CharField(max_length=100)
-        y = serializers.CharField(max_length=100)
-        z = serializers.CharField(max_length=100)
-
+        no = serializers.IntegerField()
+        x = serializers.IntegerField()
+        y = serializers.IntegerField()
+        z = serializers.IntegerField()
+        show = serializers.BooleanField()
+        
     class MultipleLocationUpdateSerializer(serializers.Serializer):
-        locations = serializers.ListField(child=serializers.DictField(),required=False)
+        items = serializers.ListField(child=serializers.DictField(),required=False)
         land_back_id = serializers.IntegerField(required=False, allow_null=True)
 
     @swagger_auto_schema(
@@ -351,28 +352,29 @@ class ItemCreateApi(APIView):
         data = serializer.validated_data
         
         land_back_id=data.get('land_back_id')
-        locations_data = data.get('locations',[])
-        
+        locations_data = data.get('items',[])
+        print(locations_data)
         print(f"Land back ID: {land_back_id}")
         for location_data in locations_data:
-            item = get_object_or_404(Item, no=location_data['item_no'])
+            item = get_object_or_404(Item, no=location_data['no'])
             user_emails = item.users.values_list('email', flat=True)
-            print(user_emails,request.user)
-            if request.user in user_emails:
+            if request.user.email not in user_emails:
                 raise PermissionDenied(f"You do not have permission to update the location of item {item.id}.")
 
             # 기존 위치 정보를 가져오거나 생성합니다.
             location, created = Location.objects.get_or_create(item=item,land=request.user.lands)
-            if not location.show:
-                location.show=True
-            # 위치 정보를 업데이트합니다.
-            location.x = location_data['x']
-            location.y = location_data['y']
-            location.z = location_data['z']
+
+            location.x = str(location_data['x'])
+            location.y = str(location_data['y'])
+            location.z = str(location_data['z'])
+            #show 여부 저장
+            location.show=location_data['show']
             location.save()
+
             
         if land_back_id:
             land = get_object_or_404(Land,user=request.user)
+            print('here')
             if request.user !=land.user:
                 raise PermissionDenied(f"You do not have permission to update the land of {land.user}.")
             land.background=land_back_id 
@@ -382,11 +384,12 @@ class ItemCreateApi(APIView):
             'status': 'success',
             'data': {
                 'updated_items': [{
-                    'no': location_data['item_no'],
+                    'no': location_data['no'],
                     'locations': {
                         'x': location_data['x'],
                         'y': location_data['y'],
-                        'z': location_data['z']
+                        'z': location_data['z'],
+                        'show':location_data['show'],
                     }
                 } for location_data in locations_data],
                 'land_background_id':land_back_id,
