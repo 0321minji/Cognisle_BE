@@ -64,7 +64,7 @@ class LandApi(APIView):
         def get_items(self, obj):
             request = self.context.get('request')
             items = self.context.get('items')
-        
+
             if obj.user == request.user:
                 # 소유자면 모든 아이템 반환
                 return LandApi.ItemSerializer(items, many=True,context={'user_email':self.context.get('user_email')}).data
@@ -177,14 +177,10 @@ class LandApi(APIView):
         email_serializer=self.UserLandItemListInputSerializer(data=request.query_params)
         email_serializer.is_valid(raise_exception=True)
         user_email=email_serializer.validated_data.get('email')
-        print(user_email)
         user=get_object_or_404(User,email=user_email)
-        # user = get_object_or_404(User, pk=user_id)
-        print(user.email)
-        print(request.user.email)
-        # land = LandSelector.get_user_land(user_id=user_id)
         land=LandSelector.get_user_land(user_email=user_email)
         items=LandSelector.get_user_items(user_email=user_email)
+        print(items)
         logger.info(f"Lands and items retrieved: {land}")
         output_serializer = self.LandItemOutputSerializer(land, context={'user_email':user_email,'request': request,'items':items})
         # if request.user.id == user_id:
