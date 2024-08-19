@@ -31,9 +31,9 @@ class LandApi(APIView):
         image = serializers.ImageField()
 
     class LocationSerializer(serializers.Serializer):
-        x = serializers.IntegerField()
-        y = serializers.IntegerField()
-        z = serializers.IntegerField()
+        x = serializers.FloatField()
+        y = serializers.FloatField()
+        z = serializers.FloatField()
         show = serializers.BooleanField()
 
     class ItemSerializer(serializers.Serializer):
