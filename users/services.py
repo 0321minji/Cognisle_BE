@@ -12,6 +12,7 @@ from django.core.files.images import ImageFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from users.selectors import UserSelector
 from users.models import User
+import bcrypt
 # from core.exceptions import ApplicationError
 
 class UserService:
@@ -22,7 +23,8 @@ class UserService:
 
         user=User(email=email, password=password, dsId=dsId,name=name,dsName=dsName)
         
-        user.set_password(password)
+        #user.set_password(password)
+        user.password=bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         user.save()
         
         data={
