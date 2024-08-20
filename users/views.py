@@ -169,7 +169,9 @@ class UserLoginApi(APIView):
 #     def get(self,request):
 #         user_lists= UserSelector   
 # 일단 특정 유저에 대한 detail api 
+
 class UserDetailApi(APIView):
+    permission_classes=(IsAuthenticated,)
     class LandSerializer(serializers.ModelSerializer):
         pk = serializers.IntegerField()
         class Meta:
