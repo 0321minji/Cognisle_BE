@@ -125,43 +125,15 @@ class UserLoginApi(APIView):
         output_serializer.is_valid(raise_exception=True)
         
         user = get_object_or_404(User, email=data.get('email'))
-
-        landcreate_data = None
-        try:
-            land = Land.objects.get(user=user)
-            landcreate_data=land.pk
-        except Land.DoesNotExist:
-            try:
-                user_token = login_data.get('access')
-                if user_token:
-                    print(user_token)
-                else:
-                    return Response ({
-                        'status':'error',
-                    },status=status.HTTP_401_UNAUTHORIZED)
-                headers = {
-                    'Authorization': f'Bearer {user_token}'
-                }
-                #스레드로 비동기 요청 
-                threading.Thread(target=post_request_in_background, args=('https://www.cognisle.shop/lands/', headers)).start()
-                #threading.Thread(target=post_request_in_background, args=('http://127.0.0.1:8000/lands/', headers)).start()
-                # print(headers)
-                # #landcreate_response = requests.post('http://127.0.0.1:8000/lands/', headers=headers)
-                # landcreate_response = requests.post('https://www.cognisle.shop/lands/', headers=headers)
-                # print(landcreate_response.status_code, landcreate_response.content)
-                # landcreate_response.raise_for_status()
-                # landcreate_data = landcreate_response.json()
-            except requests.exceptions.RequestException as e:
-                return Response({
-                    'status': 'error',
-                    'message': 'User login successful, but failed to trigger landcreate.',
-                    'error': str(e)
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        land, created = Land.objects.get_or_create(user=user)
         
-        return Response({
+        response={
             'status': 'success',
             'data': output_serializer.data,
-        }, status=status.HTTP_200_OK)
+        }
+        if created:
+            response['land']=f'A new land has been created for {user.name}'
+        return Response(response, status=status.HTTP_200_OK)
     
 # class UserListApi(APIView):
 #     permission_classes=(AllowAny,)
