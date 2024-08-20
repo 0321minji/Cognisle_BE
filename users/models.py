@@ -15,7 +15,7 @@ class UserManager(BaseUserManager):
         user.save()
         return user
 
-    def create_superuser(self, email,  password, dsId, name,dsName , **extra_fields):
+    def create_superuser(self, email,  password,  name, dsId=None,dsName=None , **extra_fields):
         #Django BaseUserManager의 기본 
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_staff', True)
