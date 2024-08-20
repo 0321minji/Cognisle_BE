@@ -10,6 +10,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 from users.models import User
+from lands.models import Location
 from .selectors import ItemSelector, LandSelector
 from rest_framework.exceptions import PermissionDenied
 from .models import Land, Location, Item, ItemImage
@@ -19,7 +20,7 @@ from drf_yasg.utils import swagger_auto_schema
 
 # Create your views here.
 class LandApi(APIView):
-    permission_classes=(AllowAny,)
+    permission_classes=(IsAuthenticated,)
     
     class LandCreateInputSerializer(serializers.Serializer):
         background=serializers.CharField(required=False,default=1)
@@ -188,7 +189,8 @@ class LandApi(APIView):
         #     output_serializer = self.PublicLandItemOutputSerializer(lands_items, many=True)
         return Response(
             {'status':'sucess',
-             'data':{'owner':user.email,
+             'data':{'owner':{'email':user.email,
+                              'name':user.name},
                      'land':output_serializer.data.get('land'),
                      'items':output_serializer.data.get('items')}}, status=status.HTTP_200_OK)
 
