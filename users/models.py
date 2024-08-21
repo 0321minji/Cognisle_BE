@@ -1,5 +1,5 @@
 from django.db import models
-
+import bcrypt
 from core.models import TimeStampedModel
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from django.contrib.auth.models import UserManager, PermissionsMixin
@@ -11,7 +11,8 @@ class UserManager(BaseUserManager):
             raise ValueError(('THe Email must be set'))
         email = self.normalize_email(email)
         user = self.model(email=email,  name=name,dsId=dsId, dsName=dsName, **extra_fields)
-        user.set_password(password)
+        #user.set_password(password)
+        user.password=bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         user.save()
         return user
 
