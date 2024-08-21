@@ -169,7 +169,10 @@ PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.Argon2PasswordHasher',
     'django.contrib.auth.hashers.ScryptPasswordHasher',
 ]
-
+AUTHENTICATION_BACKENDS = [
+    'users.auth_backends.BcryptSuperuserBackend',  # 커스터마이즈된 인증 백엔드
+    'django.contrib.auth.backends.ModelBackend',  # 기본 백엔드
+]
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
 
