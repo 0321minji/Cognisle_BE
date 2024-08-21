@@ -53,6 +53,7 @@ PROJECT_APPS = [
     'rest_framework_simplejwt',
     'core.apps.CoreConfig',
     'users.apps.UsersConfig',
+    'friends.apps.FriendsConfig',
     'sslserver',
     'lands.apps.LandsConfig',
     'drf_yasg',
@@ -184,3 +185,19 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.User'
+# Swagger
+
+SWAGGER_SETTINGS = {
+    'USE_SESSION_AUTH': False,
+    'SECURITY_DEFINITIONS': {
+        'BearerAuth': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header',
+            'description': "JWT Token"
+        }
+    },
+    'SECURITY_REQUIREMENTS': [{
+        'BearerAuth': []
+    }]
+}
