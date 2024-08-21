@@ -47,8 +47,21 @@ class LandApi(APIView):
 
         def get_locations(self, obj):
             user_email = self.context.get('user_email')
-            locations = obj.locations.get(land__user__email=user_email)
-            return LandApi.LocationSerializer(locations).data
+            try:
+                location, created = obj.locations.get_or_create(
+                    land__user__email=user_email,
+                    defaults={
+                        'x': 0,
+                        'y': 0,
+                        'z': 0,
+                        'show': False
+                    }
+                )
+            except Exception as e:
+                # 예외가 발생하면 적절한 에러 메시지를 반환합니다.
+                return {'error': str(e)}
+                    
+            return LandApi.LocationSerializer(location).data
     
     class LandItemOutputSerializer(serializers.Serializer):
         land = serializers.SerializerMethodField()
