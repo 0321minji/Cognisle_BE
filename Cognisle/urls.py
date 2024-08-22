@@ -36,4 +36,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('users/',include('users.urls')),
     path('lands/',include('lands.urls')),
+    path('friends/',include('friends.urls')),
 ]
