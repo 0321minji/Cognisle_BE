@@ -7,6 +7,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from .services import FriendService
 from users.models import User
+from friends.models import Friend, FriendRequest
 
 # Create your views here.
 class FriendApi(APIView):
@@ -44,7 +45,7 @@ class FriendApi(APIView):
         return Response({
             'status':'success',
             'data':output_serializer.data,
-        })
+        },status=status.HTTP_200_OK)
     
     #친구 신청 보내기
     def post(self,request):
@@ -86,7 +87,45 @@ class FriendApi(APIView):
             "status":"success",
             "data":{"name":to_friend.name,
                     "email":to_friend.email}
-        })
+        },status=status.HTTP_200_OK)
         
-        
-        
+class AcceptRequestApi(APIView):
+    permission_classes=(IsAuthenticated,)
+    
+    class AcceptRequestInputSerializer(serializers.Serializer):
+        email=serializers.EmailField()
+    
+    def post(self,request):
+        serializers=self.AcceptRequestInputSerializer(data=request.data)
+        serializers.is_valid(raise_exception=True)
+        email=serializers.validated_data.get('email')
+        from_user=get_object_or_404(User,email=email)
+        friend_request=FriendRequest.objects.filter(from_user=from_user,to_user=request.user).first()
+
+        if not friend_request:
+            return Response({
+                "status": "fail",
+                "message": "해당 요청이 존재하지 않습니다."
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            friend_request.accept()
+        except Exception as e:
+            return Response({
+                "status": "fail",
+                "message": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            "status": "success",
+            "data": {
+                "from_user": {
+                    "name": from_user.name,
+                    "email": from_user.email
+                },
+                "to_user": {
+                    "name": request.user.name,
+                    "email": request.user.email
+                }
+            }
+        }, status=status.HTTP_200_OK)
