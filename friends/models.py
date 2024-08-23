@@ -22,6 +22,9 @@ class FriendRequest(models.Model):
     def reject(self):
         self.delete()
         
+    def __str__(self):
+        return (self.from_user.email)+"가 "+self.to_user.email+"에게 보낸 신청"
+        
 class Friend(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     friends = models.ManyToManyField(User, symmetrical=False, related_name="friend_set", blank=True)
