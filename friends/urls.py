@@ -7,5 +7,5 @@ urlpatterns=[
     path('',FriendApi.as_view(),name='friends'),
     path('request/accept/',AcceptRequestApi.as_view(),name='request_accept'),
     path('request/reject/',RejectRequestApi.as_view(),name='request_reject'),
-    
+    path('request/',RequestApi.as_view(),name='requests'),
 ]
