@@ -129,3 +129,44 @@ class AcceptRequestApi(APIView):
                 }
             }
         }, status=status.HTTP_200_OK)
+        
+class RejectRequestApi(APIView):
+    permission_classes=(IsAuthenticated,)
+    
+    class RejectRequestInputSerializer(serializers.Serializer):
+        email=serializers.EmailField()
+    
+    def post(self,request):
+        serializers=self.RejectRequestInputSerializer(data=request.data)
+        serializers.is_valid(raise_exception=True)
+        email=serializers.validated_data.get('email')
+        from_user=get_object_or_404(User,email=email)
+        friend_request=FriendRequest.objects.filter(from_user=from_user,to_user=request.user).first()
+        
+        if not friend_request:
+            return Response({
+                "status": "fail",
+                "message": "해당 요청이 존재하지 않습니다."
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            friend_request.reject()
+        except Exception as e:
+            return Response({
+                "status": "fail",
+                "message": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            "status": "success",
+            # "data": {
+            #     "from_user": {
+            #         "name": from_user.name,
+            #         "email": from_user.email
+            #     },
+            #     "to_user": {
+            #         "name": request.user.name,
+            #         "email": request.user.email
+            #     }
+            # }
+        }, status=status.HTTP_200_OK)
