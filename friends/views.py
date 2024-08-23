@@ -170,3 +170,21 @@ class RejectRequestApi(APIView):
             #     }
             # }
         }, status=status.HTTP_200_OK)
+class RequestApi(APIView):
+    permission_classes=(IsAuthenticated,)
+
+    class RequestOutputSerializer(serializers.Serializer):
+        name=serializers.CharField(source='from_user.name')
+        email=serializers.EmailField(source='from_user.email')
+        
+    def get(self,request):
+        user=request.user
+        
+        friend_requests=FriendRequest.objects.filter(to_user=user)
+        print(friend_requests)
+        serializer=self.RequestOutputSerializer(friend_requests,many=True)
+        
+        return Response({
+            "status":'success',
+            "data":serializer.data,
+        },status=status.HTTP_200_OK)
