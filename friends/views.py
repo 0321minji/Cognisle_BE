@@ -48,7 +48,7 @@ class FriendApi(APIView):
                 'data':output_serializer.data,
             },status=status.HTTP_200_OK)
         else:
-            friend = get_object_or_404(Friend, user=request.user)
+            friend, created = Friend.objects.get_or_create(user=request.user)
             serializer = self.FindFriendOutputSerializer(friend.friends.all(), many=True)
             return Response({
                 "status": "success",
