@@ -23,29 +23,37 @@ class FriendApi(APIView):
     #친구 검색하기
     def get(self,request):
         serializers=self.FindFriendInputSerializer(data=request.query_params)
-        serializers.is_valid(raise_exception=True)
+        serializers.is_valid()
         email=serializers.validated_data.get('email')
-        user=get_object_or_404(User,email=email)
-        
-        if user==request.user:
-            print('here')
+        if email:
+            user=get_object_or_404(User,email=email)
+            
+            if user==request.user:
+                print('here')
+                return Response({
+                    'status':'fail',
+                    'data':"자기 자신을 검색할 수 없습니다.",
+                })
+            
+            user_data = {
+                'name': user.name,
+                'email': user.email,
+                }
+            
+            output_serializer=self.FindFriendOutputSerializer(data=user_data)
+            output_serializer.is_valid(raise_exception=True)
+            
             return Response({
-                'status':'fail',
-                'data':"자기 자신을 검색할 수 없습니다.",
-            })
-        
-        user_data = {
-            'name': user.name,
-            'email': user.email,
-            }
-        
-        output_serializer=self.FindFriendOutputSerializer(data=user_data)
-        output_serializer.is_valid(raise_exception=True)
-        
-        return Response({
-            'status':'success',
-            'data':output_serializer.data,
-        },status=status.HTTP_200_OK)
+                'status':'success',
+                'data':output_serializer.data,
+            },status=status.HTTP_200_OK)
+        else:
+            friend = get_object_or_404(Friend, user=request.user)
+            serializer = self.FindFriendOutputSerializer(friend.friends.all(), many=True)
+            return Response({
+                "status": "success",
+                "data": serializer.data
+            },status=status.HTTP_200_OK)
     
     #친구 신청 보내기
     def post(self,request):
@@ -170,6 +178,7 @@ class RejectRequestApi(APIView):
             #     }
             # }
         }, status=status.HTTP_200_OK)
+
 class RequestApi(APIView):
     permission_classes=(IsAuthenticated,)
 
