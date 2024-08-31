@@ -67,12 +67,13 @@ class LandApi(APIView):
         items = serializers.SerializerMethodField()
 
         def get_land(self, obj):
-            print(obj)
-            print(f"Object type: {type(obj)}")
             s3_base_url = "https://s3.ap-northeast-2.amazonaws.com/cognisle.shop/media/lands/background/"
             land_img = f'{s3_base_url}land{obj.background}.png'
             bg_img = f'{s3_base_url}bg{obj.background}.png'
-            return {'state': int(obj.background), 'land_img': land_img, 'bg_img': bg_img}
+            request = self.context.get('request')
+            if request and hasattr(request, 'user'):
+                user_likes = request.user in obj.likeuser_set.all()
+            return {'state': int(obj.background), 'land_img': land_img, 'bg_img': bg_img, 'like_cnt':int(obj.like_cnt), 'user_likes':user_likes}
 
         def get_items(self, obj):
             request = self.context.get('request')
@@ -195,16 +196,14 @@ class LandApi(APIView):
         items=LandSelector.get_user_items(user_email=user_email)
         logger.info(f"Lands and items retrieved: {land}")
         output_serializer = self.LandItemOutputSerializer(land, context={'user_email':user_email,'request': request,'items':items})
-        # if request.user.id == user_id:
-        #     output_serializer = self.LandItemOutputSerializer(lands_items, many=True)
-        # else:
-        #     output_serializer = self.PublicLandItemOutputSerializer(lands_items, many=True)
+        
         return Response(
             {'status':'sucess',
              'data':{'owner':{'email':user.email,
                               'name':user.name},
                      'land':output_serializer.data.get('land'),
-                     'items':output_serializer.data.get('items')}}, status=status.HTTP_200_OK)
+                     'items':output_serializer.data.get('items'),
+                     }}, status=status.HTTP_200_OK)
 
 class ItemImageCreateApi(APIView):
     permission_classes=(IsAuthenticated,)
