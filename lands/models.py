@@ -8,7 +8,7 @@ class Location(models.Model):
     x=models.CharField(max_length=100,blank=False)
     y=models.CharField(max_length=100,blank=False)
     z=models.CharField(max_length=100,blank=False)
-    item=models.ForeignKey('Item',related_name='locations',on_delete=models.SET_NULL, null=True, blank=False)
+    item=models.ForeignKey('Item',related_name='locations',on_delete=models.CASCADE, null=True, blank=False)
     land = models.ForeignKey('Land', related_name='locations', on_delete=models.CASCADE, null=True, blank=True)
     show = models.BooleanField(default=False)
     
