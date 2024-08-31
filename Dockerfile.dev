@@ -1,0 +1,22 @@
+# 베이스 이미지를 Python으로 설정
+FROM python:3.11
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libssl-dev \
+    libffi-dev \
+    python3-dev \
+    gcc
+    
+# 작업 디렉토리 설정
+WORKDIR /app
+
+# 애플리케이션 소스 코드 복사
+COPY . /app
+
+# Python 패키지 설치
+RUN pip install --upgrade pip && \
+    pip install -r /app/requirements.txt
+
+# 로컬 개발용 서버 실행
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
