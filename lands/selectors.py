@@ -71,6 +71,10 @@ class LandSelector:
         user_items=Item.objects.filter(users__email=user_email)
         return user_items
     
+    @staticmethod
+    def likes(land:Land, user:User):
+        return land.likeuser_set.filter(pk=user.pk).exists()
+    
 class LocationSelector:
     @staticmethod
     def show(self, location:Location):

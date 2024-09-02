@@ -5,7 +5,7 @@ from django.shortcuts import get_list_or_404, get_object_or_404
 import io, time, uuid
 from django.conf import settings
 from Cognisle.settings import development
-from .selectors import ItemSelector
+from .selectors import ItemSelector, LandSelector
 from .models import Land,Location,Item, ItemImage
 from users.models import User
 from core.utils import s3_file_upload_by_file_data
@@ -53,6 +53,23 @@ class LandService:
         land.save()
         
         return land
+    
+    @staticmethod
+    def like_or_dislike(land:Land, user:User) -> bool:
+        if LandSelector.likes(land=land,user=user):
+            land.likeuser_set.remove(user)
+            land.like_cnt-=1
+            
+            land.full_clean()
+            land.save()
+            return False
+        else:
+            land.likeuser_set.add(user)
+            land.like_cnt+=1
+            
+            land.full_clean()
+            land.save()
+            return True
     
 class ItemImageService:
     def __init__(self):

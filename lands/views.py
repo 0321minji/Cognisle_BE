@@ -13,7 +13,7 @@ from lands.models import Location
 from .selectors import ItemSelector, LandSelector
 from rest_framework.exceptions import PermissionDenied
 from .models import Land, Location, Item, ItemImage
-from .services import LandCoordinatorService, ItemImageService, ItemService
+from .services import LandCoordinatorService, ItemImageService, ItemService, LandService
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
@@ -204,6 +204,32 @@ class LandApi(APIView):
                      'land':output_serializer.data.get('land'),
                      'items':output_serializer.data.get('items'),
                      }}, status=status.HTTP_200_OK)
+
+class LandLikeApi(APIView):
+    permission_classes=(IsAuthenticated,)
+    
+    class UserLandItemListInputSerializer(serializers.Serializer):
+        email = serializers.CharField()
+        
+    def put(self,request):
+        serializers=self.UserLandItemListInputSerializer(data=request.data)
+        serializers.is_valid(raise_exception=True)
+        data=serializers.validated_data
+        
+        user=get_object_or_404(User,email=data.get('email'))
+        land=get_object_or_404(Land,user=user)
+        
+        likes=LandService.like_or_dislike(
+            land=land,
+            user=user
+        )
+        
+        return Response({
+            "status":"success",
+            "data":{'land_owner':land.user.email,
+                'likes':likes,
+                'like_cnt':land.like_cnt}
+        },status=status.HTTP_200_OK)
 
 class ItemImageCreateApi(APIView):
     permission_classes=(IsAuthenticated,)
