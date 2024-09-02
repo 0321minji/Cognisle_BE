@@ -211,7 +211,7 @@ class LandLikeApi(APIView):
     class UserLandItemListInputSerializer(serializers.Serializer):
         email = serializers.CharField()
         
-    def put(self,request):
+    def post(self,request):
         serializers=self.UserLandItemListInputSerializer(data=request.data)
         serializers.is_valid(raise_exception=True)
         data=serializers.validated_data
