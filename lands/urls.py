@@ -12,4 +12,6 @@ urlpatterns=[
     path('items/game/',ItemGetApi.as_view(),name='item_get'),
     #path('items/list/',ItemListApi.as_view(),name='item_list'),
     #path('items/',AllItemListApi.as_view(),name='all_item_list'),
+    path('likes/',LandLikeApi.as_view(),name='land_like'),
+    
 ]
