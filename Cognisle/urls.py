@@ -37,4 +37,5 @@ urlpatterns = [
     path('users/',include('users.urls')),
     path('lands/',include('lands.urls')),
     path('friends/',include('friends.urls')),
+    path('gbooks/',include('gbooks.urls')),
 ]
