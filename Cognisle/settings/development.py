@@ -54,9 +54,11 @@ PROJECT_APPS = [
     'core.apps.CoreConfig',
     'users.apps.UsersConfig',
     'friends.apps.FriendsConfig',
+    'gbooks.apps.GbooksConfig',
     'sslserver',
     'lands.apps.LandsConfig',
     'drf_yasg',
+    'channels',
 ]
 
 INSTALLED_APPS = DJANGO_APPS+PROJECT_APPS
@@ -212,4 +214,15 @@ SWAGGER_SETTINGS = {
     'SECURITY_REQUIREMENTS': [{
         'BearerAuth': []
     }]
+}
+
+ASGI_APPLICATION = 'Cognisle.asgi.application'
+# Redis를 백엔드로 사용하기 위한 Channel Layers 설정
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],  # Redis 서버의 주소와 포트
+        },
+    },
 }
