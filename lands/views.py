@@ -214,14 +214,14 @@ class LandLikeApi(APIView):
     def post(self,request):
         serializers=self.UserLandItemListInputSerializer(data=request.data)
         serializers.is_valid(raise_exception=True)
-        data=serializers.validated_data
+        data=serializers.validated_data 
         
         user=get_object_or_404(User,email=data.get('email'))
         land=get_object_or_404(Land,user=user)
         
         likes=LandService.like_or_dislike(
             land=land,
-            user=user
+            user=request.user,
         )
         
         return Response({
