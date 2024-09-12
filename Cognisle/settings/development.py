@@ -59,7 +59,6 @@ PROJECT_APPS = [
     'lands.apps.LandsConfig',
     'drf_yasg',
     'channels',
-    'gbooks.apps.GbooksConfig',
 ]
 
 INSTALLED_APPS = DJANGO_APPS+PROJECT_APPS

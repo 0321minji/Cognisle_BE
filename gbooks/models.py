@@ -1,8 +1,8 @@
 from django.db import models
-from django.contrib.auth.models import User
+
 
 class GuestBook(models.Model):
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='guestbooks')
+    owner = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='guestbooks')
     title = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -14,7 +14,7 @@ class GuestBook(models.Model):
 
 class Message(models.Model):
     guestbook = models.ForeignKey(GuestBook, on_delete=models.CASCADE, related_name='messages')
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey('users.User', on_delete=models.CASCADE)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
