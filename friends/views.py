@@ -25,9 +25,9 @@ class FriendApi(APIView):
         serializers=self.FindFriendInputSerializer(data=request.query_params)
         serializers.is_valid()
         email=serializers.validated_data.get('email')
-        if email:
-            user=get_object_or_404(User,email=email)
-            
+        user = User.objects.filter(email=email).first()
+        
+        if user:    
             if user==request.user:
                 print('here')
                 return Response({
@@ -48,11 +48,11 @@ class FriendApi(APIView):
                 'data':output_serializer.data,
             },status=status.HTTP_200_OK)
         else:
-            friend, created = Friend.objects.get_or_create(user=request.user)
-            serializer = self.FindFriendOutputSerializer(friend.friends.all(), many=True)
+            # friend, created = Friend.objects.get_or_create(user=user)
+            # serializer = self.FindFriendOutputSerializer(user)
             return Response({
-                "status": "success",
-                "data": serializer.data
+                "status": "fail",
+                "data": "해당 email을 가진 유저가 없습니다."
             },status=status.HTTP_200_OK)
     
     #친구 신청 보내기
