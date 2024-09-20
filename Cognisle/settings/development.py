@@ -37,7 +37,7 @@ DEFAULT_FILE_STORAGE = 'Cognisle.custom_storages.MediaStorage'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost','127.0.0.1','.compute.amazonaws.com', '.cognisle.shop', '52.78.219.243']
+ALLOWED_HOSTS = ['localhost','127.0.0.1','.compute.amazonaws.com', '.cognisle.shop', '43.203.193.140']
 SECURE_SSL_REDIRECT = False
 
 # Application definition
