@@ -197,3 +197,17 @@ class RequestApi(APIView):
             "status":'success',
             "data":serializer.data,
         },status=status.HTTP_200_OK)
+        
+class FriendListApi(APIView):
+    class FriendListOutputSerializer(serializers.Serializer):
+        name=serializers.CharField()
+        email=serializers.EmailField()
+        
+    def get(self,request):
+        user=request.user
+        friend, created = Friend.objects.get_or_create(user=user)
+        serializer = self.FriendListOutputSerializer(friend.friends.all(), many=True)
+        return Response({
+            "status": "success",
+            "data": serializer.data
+        },status=status.HTTP_200_OK)

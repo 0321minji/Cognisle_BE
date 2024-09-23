@@ -8,4 +8,5 @@ urlpatterns=[
     path('request/accept/',AcceptRequestApi.as_view(),name='request_accept'),
     path('request/reject/',RejectRequestApi.as_view(),name='request_reject'),
     path('request/',RequestApi.as_view(),name='requests'),
+    path('list/',FriendsListApi.as_view(),name='friends_list'),
 ]
